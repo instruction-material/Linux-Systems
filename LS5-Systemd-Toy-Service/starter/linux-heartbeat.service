@@ -1,0 +1,12 @@
+[Unit]
+Description=Linux Systems heartbeat service
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/linux-heartbeat
+ExecStart=/usr/bin/python3 /opt/linux-heartbeat/heartbeat_app.py
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,10 @@
+[Unit]
+Description=Run Linux Systems backups
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+Unit=linux-backup.service
+
+[Install]
+WantedBy=timers.target

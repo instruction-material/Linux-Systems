@@ -1,0 +1,20 @@
+[Unit]
+Description=Linux Systems toy application
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/linux-toy-app
+EnvironmentFile=-/etc/default/linux-toy-app
+Environment=APP_PORT=8081
+ExecStart=/usr/bin/python3 /opt/linux-toy-app/app.py
+Restart=on-failure
+RestartSec=2
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

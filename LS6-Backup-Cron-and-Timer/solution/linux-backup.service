@@ -1,0 +1,9 @@
+[Unit]
+Description=Create a Linux Systems backup archive
+
+[Service]
+Type=oneshot
+Environment=RETENTION_COUNT=5
+ExecStart=/usr/local/bin/backup_home.sh
+StandardOutput=journal
+StandardError=journal
