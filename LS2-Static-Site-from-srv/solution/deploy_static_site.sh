@@ -1,23 +1,40 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SITE_ROOT="${1:-/srv/linux-systems-site}"
-OWNER="${2:-www-data:www-data}"
+#################
+#   CONSTANTS   #
+#################
+readonly DEFAULT_SITE_ROOT="/srv/linux-systems-site"
+readonly DEFAULT_OWNER="www-data:www-data"
+readonly INDEX_FILE="index.html"
+readonly SITE_DIR_MODE="0755"
+readonly PAGE_FILE_MODE="0644"
 
-mkdir -p "$SITE_ROOT"
-install -m 0644 index.html "$SITE_ROOT/index.html"
+#################
+#   MAIN CODE   #
+#################
+# Read optional deployment settings from the command line
+site_root="${1:-$DEFAULT_SITE_ROOT}"
+site_owner="${2:-$DEFAULT_OWNER}"
 
+# Create the destination directory and install the static homepage
+mkdir -p "$site_root"
+install -m "$PAGE_FILE_MODE" "$INDEX_FILE" "$site_root/$INDEX_FILE"
+
+# Apply ownership when the host provides chown
 if command -v chown >/dev/null 2>&1; then
-	chown -R "$OWNER" "$SITE_ROOT" 2>/dev/null || true
+	chown -R "$site_owner" "$site_root" 2>/dev/null || true
 fi
 
+# Apply permissions when the host provides chmod
 if command -v chmod >/dev/null 2>&1; then
-	chmod 0755 "$SITE_ROOT"
-	chmod 0644 "$SITE_ROOT/index.html"
+	chmod "$SITE_DIR_MODE" "$site_root"
+	chmod "$PAGE_FILE_MODE" "$site_root/$INDEX_FILE"
 fi
 
+# Print follow-up checks the student can run after deployment
 cat <<EOF
-Copied static site to $SITE_ROOT
+Copied static site to $site_root
 Suggested verification:
 - sudo nginx -t
 - sudo systemctl reload nginx
