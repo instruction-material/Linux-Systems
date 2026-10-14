@@ -118,7 +118,7 @@ diff -u "$lab/config.json" "$lab/candidate.json"
 kill -USR1 "$pid"
 ~~~
 
-Validation should succeed. Diff exits 1 when the two files differ; that is not
+Validation passes with these values. Diff exits 1 when the two files differ; that is not
 a failed comparison command. Inspect the changed keys before continuing. The
 running process still reports the baseline because editing the candidate does
 not apply it. Quoting every path keeps a path containing spaces one argument.
@@ -172,7 +172,7 @@ kill -USR1 "$pid"
 ~~~
 
 Bash -n checks shell syntax without executing the script. Both cmp commands
-should exit 0, proving exact backup and applied bytes. The snapshot before HUP
+exit 0, proving exact backup and applied bytes. The snapshot before HUP
 still shows the baseline. Terminal A then reports `reloaded`, followed by a
 snapshot rendering `Edited configuration Edited configuration`. Copying a file
 and asking an application to reload it are separate operations.
@@ -210,7 +210,7 @@ running output, then use the validated rollback and reload to restore it.
 
 Complete edit-notes.md with commands, predicted and observed results, exit
 statuses, exact comparisons, the real PID, rejected change and final recovery.
-Pause after each numbered section for an instructor walkthrough or work through
+Pause after each numbered section for discussion, or work through
 the same sequence independently. Explain why validation precedes replacement
 and why editing disk did not itself update the running output. Compare the
 reference only after producing a working attempt and explain any differences.

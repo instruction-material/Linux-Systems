@@ -86,8 +86,8 @@ cmp "$lab/primary.conf" "$lab/primary.evidence.conf"
 cmp "$lab/secondary.conf" "$lab/secondary.evidence.conf"
 ~~~
 
-Predict both diff hunks before running preview. Only the timeout digits should
-change to 25; names, notes and comments must stay byte-for-byte unchanged. Both
+Predict both diff hunks before running preview. The intended diff changes only the timeout digits
+to 25; names, notes and comments must stay byte-for-byte unchanged. Both
 cmp commands exit 0 because preview leaves current files unchanged. Diff exits
 1 when differences exist, so the controller distinguishes that ordinary result
 from a diff error. A successful preview exits 0 after validating both prepared
@@ -164,7 +164,7 @@ that target. Restore a regular owned file afterward.
 Record predictions, exact diffs, exit statuses, modes, complete backup paths,
 unchanged-source comparisons, any observed partial state and exact recovery in
 replacement-notes.md. Explain how an anchor differs from a broad text search
-and why validation precedes application. For instructor pacing, pause after
+and why validation precedes application. For paced discussion, pause after
 each numbered section; the same sequence supports independent work.
 
 Preserve the evidence and then remove only the exact disposable lab directory
