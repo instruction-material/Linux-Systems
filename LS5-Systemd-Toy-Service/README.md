@@ -104,7 +104,7 @@ journalctl --user -u "$lab_unit" --no-pager -n 20
 ```
 
 Type=simple may report a successful start command before the app later fails.
-The untouched learner must settle in failed state with ExecMainStatus=78,
+The untouched starter program must settle in failed state with ExecMainStatus=78,
 MainPID=0 and no restart loop. Complete the named function in the learner source
 then copy the changed app to the installed path:
 
