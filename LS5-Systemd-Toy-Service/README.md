@@ -54,7 +54,7 @@ message case. These checks establish the app contract before manager operation.
 
 ## Install a unique owned user unit
 
-Keep this shell open. The lab uses a unique name and refuses to replace an
+Keep this shell open. The guarded setup refuses to replace an
 existing install or unit. It reads HOME without changing its value.
 
 ```bash
@@ -63,8 +63,8 @@ lab_name="linux-heartbeat-$(id -u)-$$"
 lab_unit="$lab_name.service"
 install_root="$HOME/.local/share/$lab_name"
 unit_root="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user"
-test ! -e "$install_root"
-test ! -e "$unit_root/$lab_unit"
+if test ! -e "$install_root" &&\
+   test ! -e "$unit_root/$lab_unit"; then
 mkdir -p "$install_root" "$unit_root"
 cp "$role_dir/heartbeat_app.py" "$install_root/heartbeat_app.py"
 cp "$role_dir/heartbeat.env.example" "$install_root/heartbeat.env"
@@ -80,6 +80,9 @@ PY
 systemd-analyze --user verify "$unit_root/$lab_unit"
 systemctl --user daemon-reload
 systemctl --user cat "$lab_unit"
+else
+  printf 'The lab name is already in use. Stop here and choose a new name.\n' >&2
+fi
 ```
 
 The unit is a user unit: %h identifies the user's home; the process inherits
@@ -175,7 +178,7 @@ after the start limit. Record the actual diagnostic, restart count and manager
 result; do not infer success from the restart command's return alone.
 
 Restore the good environment, use `systemctl --user reset-failed "$lab_unit"`
-and start it again. Require active/running state, a new process with the owned
+and start it again. Confirm active/running state, a new process with the owned
 identity and fresh journal rows bearing the restored message.
 
 Complete service-notes.md with the environment, versions, source role, direct

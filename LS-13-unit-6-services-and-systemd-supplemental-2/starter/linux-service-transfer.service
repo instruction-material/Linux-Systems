@@ -1,0 +1,21 @@
+[Unit]
+Description=Owned Linux service transfer
+StartLimitIntervalSec=10
+StartLimitBurst=3
+
+[Service]
+Type=simple
+# TODO: use the existing installed directory, not a missing child directory.
+WorkingDirectory=%h/.local/share/linux-service-transfer/TODO-working-directory
+Environment=APP_PORT=8081
+EnvironmentFile=%h/.local/share/linux-service-transfer/transfer.env
+ExecStart=/usr/bin/python3 -u "%h/.local/share/linux-service-transfer/TODO-transfer_app.py"
+Restart=on-failure
+RestartPreventExitStatus=2 200 203
+RestartSec=1
+TimeoutStopSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target
