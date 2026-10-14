@@ -39,9 +39,7 @@ jobs:
           sudo systemctl start "user@$native_lab_uid.service"
           sudo install -d -m 2755 -o root -g systemd-journal /var/log/journal
           sudo journalctl --flush
-          printf 'XDG_RUNTIME_DIR=%s
-DBUS_SESSION_BUS_ADDRESS=unix:path=%s/bus
-' "$native_lab_runtime" "$native_lab_runtime" >>"$GITHUB_ENV"
+          printf 'XDG_RUNTIME_DIR=%s\nDBUS_SESSION_BUS_ADDRESS=unix:path=%s/bus\n' "$native_lab_runtime" "$native_lab_runtime" >>"$GITHUB_ENV"
       - name: Verify actual owned user service, journal, restart and recovery
         run: python3 test/verify_systemd_service.py --proof output/linux-systemd-service.json
       - name: Retain native source acceptance
