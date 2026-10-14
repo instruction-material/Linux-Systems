@@ -35,6 +35,12 @@ python3 test/verify_owned_labs.py --proof output/linux-owned-labs.json
 The suite covers working references, deliberately unfinished starters, four
 independent learner completions, real access observations, archive restoration
 and isolated serving. It does not infer worksheet completion, VM provisioning
-or scheduled execution. The remaining 44 generated reference scripts are still
+or scheduled execution. The remaining generated reference scripts are still
 outside this repaired source track; their differing lesson purposes need the
 continuing course audit. The site import integration is a separate gate.
+
+## Logging and observability source track
+
+Unit 7 now separates a scoped user-journal incident, optional structured application-log transfer, and optional disposable-file retention. Each pack includes its input fixture or complete setup, named learner task, working reference, operating predictions, changed cases and evidence record. The troubleshooting notebook belongs to the core incident attempt.
+
+Run `python3 test/verify_logging_labs.py --proof output/linux-logging-labs.json` on the owned Linux user-manager environment with logrotate. The native gate verifies real journal UID/PID/boot/priority and invocation recovery, structured response timelines, compressed retention, no-op empty input, debug preview, path boundaries and cleanup. `--offline-only` checks the two analysis packs without claiming journal or logrotate acceptance.

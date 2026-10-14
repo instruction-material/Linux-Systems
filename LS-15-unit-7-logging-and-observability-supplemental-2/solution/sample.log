@@ -1,0 +1,5 @@
+{"event": "start", "message": "request accepted", "request": "case-7", "time": "2026-01-01T12:00:00Z"}
+{"event": "complete", "message": "dependency unavailable", "request": "case-7", "status": 503, "time": "2026-01-01T12:00:01Z"}
+{"event": "start", "message": "retry accepted; ERROR is a word in this message", "request": "case-7", "time": "2026-01-01T12:00:02Z"}
+{"event": "complete", "message": "retry completed", "request": "case-7", "status": 200, "time": "2026-01-01T12:00:03Z"}
+{"event": "complete", "message": "unrelated incident", "request": "other-request", "status": 500, "time": "2026-01-01T12:00:01Z"}
