@@ -18,6 +18,11 @@ repeated or unrelated message. The reference completes the same task.
 The embedded Python receives each JSON object as a dictionary named row.
 `row.get("FIELD")` reads a field without treating an absent field as a match;
 the two unit-field alternatives refer to application and manager records.
+A manager entry can carry `_SYSTEMD_USER_UNIT=init.scope` and
+`USER_UNIT=linux-observe-demo.service` together. Select the requested service
+when either field matches, then also require the boot and time window. A
+first-present-field fallback loses relevant manager entries. Python `or`
+combines the unit alternatives; `and` combines the required scope conditions.
 `int` converts the validated decimal timestamp for numeric comparisons. The
 selection returns a boolean: all requested scope conditions hold together.
 Returning None marks the named unfinished task rather than selecting a row.
@@ -56,8 +61,10 @@ included by this query before completing `in_scope`:
 bash task.sh sample.log linux-observe-demo.service aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 100 500
 ~~~
 
-The four case events and the informational ERROR-word message belong to this
-window. The other boot, other unit and timestamp 50 do not. The application
+The four application case events, one manager explanation and the informational
+ERROR-word message belong to this window: six records, including two with error
+priority. The manager explanation has USER_UNIT naming the target while its own
+_SYSTEMD_USER_UNIT is init.scope. The other boot, other unit and timestamp 50 do not. The application
 cause is `case: event=config_missing` at 200, and a different invocation records
 `case: event=ready` at 400. Count priorities rather than substrings. Change the
 window to end at 300: recovery disappears. Change the unit or boot: the

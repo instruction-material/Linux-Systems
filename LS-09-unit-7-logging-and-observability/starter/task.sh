@@ -9,7 +9,7 @@ from pathlib import Path
 
 def in_scope(row, unit, boot, begin, end):
     # SCOPE_TASK
-    # TODO: require the requested unit, boot and inclusive time window.
+    # TODO: match either unit field, then require the boot and inclusive time window.
     return None
 
 
