@@ -1,0 +1,22 @@
+[Unit]
+Description=Owned Linux environment and drop-in extension
+StartLimitIntervalSec=10
+StartLimitBurst=3
+
+[Service]
+Type=simple
+WorkingDirectory=%h/.local/share/linux-service-extension
+Environment=HEARTBEAT_INTERVAL=0.5
+Environment=HEARTBEAT_MESSAGE=unit-default
+Environment=HEARTBEAT_LIMIT=0
+EnvironmentFile=%h/.local/share/linux-service-extension/base.env
+ExecStart=/usr/bin/python3 -u "%h/.local/share/linux-service-extension/heartbeat_app.py"
+Restart=on-failure
+RestartPreventExitStatus=2 78
+RestartSec=1
+TimeoutStopSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target
