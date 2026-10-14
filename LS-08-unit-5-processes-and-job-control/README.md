@@ -71,6 +71,17 @@ worker waits; state alone does not prove correctness. Optional `top -b -n 1 -p
 group, session and job number describe different relationships. The shell's
 jobs table contains its own jobs rather than every process on the machine.
 
+A PID identifies one process; its PPID identifies its current parent. UID is the
+account identity used for ownership and permission checks. A process group
+collects related processes so signals can address the group together; a shell
+pipeline can have several processes in one job. A session contains process
+groups and can have a controlling terminal. That terminal designates one group
+as foreground. PGID and SID identify those two groupings; they are not new job
+numbers. Starting a nested Bash does not automatically create a new session.
+This one-command job often has its worker PID as PGID, but inspect the actual
+values instead of assuming all identifiers are interchangeable. Elapsed values
+in the JSON records are wall-clock seconds since this worker started.
+
 ## 2. Signal, observe and reap
 
 ~~~bash
