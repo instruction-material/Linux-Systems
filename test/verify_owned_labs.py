@@ -229,7 +229,7 @@ with tempfile.TemporaryDirectory(prefix='linux-owned-labs-') as temporary:
             block = block.replace('/var/log/nginx/linux-systems.access.log', str(server_root / 'access.log'))
             block = block.replace('/var/log/nginx/linux-systems.error.log', str(server_root / 'error.log'))
             configuration = server_root / 'nginx.conf'
-            configuration.write_text('daemon off;\nmaster_process off;\npid ' + str(server_root / 'nginx.pid') + ';\nerror_log ' + str(server_root / 'error.log') + ';\nevents { worker_connections 32; }\nhttp { default_type text/plain;\n' + block + '\n}\n')
+            configuration.write_text('daemon off;\nmaster_process off;\npid ' + str(server_root / 'nginx.pid') + ';\nerror_log ' + str(server_root / 'error.log') + ';\nevents { worker_connections 32; }\nhttp { default_type text/plain; access_log ' + str(server_root / 'http-access.log') + ';\n' + block + '\n}\n')
             nginx = shutil.which('nginx') or '/usr/sbin/nginx'
             run([nginx, '-t', '-p', str(server_root) + '/', '-c', str(configuration)], work, label='static-' + role + '-nginx-syntax')
             command = [nginx, '-p', str(server_root) + '/', '-c', str(configuration)]
