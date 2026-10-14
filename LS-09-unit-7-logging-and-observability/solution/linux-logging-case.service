@@ -1,0 +1,12 @@
+[Unit]
+Description=Owned logging investigation fixture
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/bash "__LAB__/incident_app.sh" "__LAB__/case.conf"
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=linux-observe-case
+SyslogLevelPrefix=yes
+Restart=no
