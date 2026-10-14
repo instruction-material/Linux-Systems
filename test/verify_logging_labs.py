@@ -127,6 +127,14 @@ def offline_core(work, role):
     rows[3]['__REALTIME_TIMESTAMP'] = '200'
     write_rows(changed, rows)
     assert not analyze_core(work, changed)['recovered']
+    latest_rows = [json.loads(line) for line in (work / 'sample.log').read_text().splitlines()]
+    latest_rows.append(dict(latest_rows[1], __REALTIME_TIMESTAMP='480', MESSAGE='case: event=config_invalid', _SYSTEMD_INVOCATION_ID='later-failure'))
+    write_rows(changed, latest_rows)
+    reopened = analyze_core(work, changed)
+    assert reopened['firstError'] == 'case: event=config_missing' and reopened['latestError'] == 'case: event=config_invalid' and not reopened['recovered']
+    latest_rows.append(dict(latest_rows[3], __REALTIME_TIMESTAMP='490', _SYSTEMD_INVOCATION_ID='new-retest'))
+    write_rows(changed, latest_rows)
+    assert analyze_core(work, changed)['recovered']
     changed.write_text('not-json\n')
     analyze_core(work, changed, expected=2)
     changed.write_text('')
@@ -157,6 +165,13 @@ def offline_transfer(work, role):
     assert analyze_transfer(work, changed)['recovered']
     write_rows(changed, rows[:3])
     assert not analyze_transfer(work, changed)['recovered']
+    latest_rows = [*rows, {"time": '2026-01-01T12:00:04Z', "request": 'case-7', "event": 'complete', "status": 503, "message": 'dependency failed again'}]
+    write_rows(changed, latest_rows)
+    reopened = analyze_transfer(work, changed)
+    assert reopened['lastStatus'] == 503 and not reopened['recovered']
+    latest_rows.append({"time": '2026-01-01T12:00:05Z', "request": 'case-7', "event": 'complete', "status": 200, "message": 'latest retry completed'})
+    write_rows(changed, latest_rows)
+    assert analyze_transfer(work, changed)['recovered']
     rows[1]['status'] = True
     write_rows(changed, rows)
     analyze_transfer(work, changed, expected=2)
@@ -238,6 +253,13 @@ def native_core(work, role):
                 break
             assert time.monotonic() < deadline
             time.sleep(0.1)
+        if role != 'starter':
+            export.write_text(output2)
+            latest_rows = [json.loads(line) for line in output2.splitlines() if line.startswith('{')]
+            latest_end = max(time.time_ns() // 1000, max(int(row['__REALTIME_TIMESTAMP']) for row in latest_rows))
+            reopened = analyze_core(work, export, unit, boot, begin, latest_end)
+            assert reopened['latestError'] == 'case: event=config_invalid' and not reopened['recovered']
+            records.append({'kind': 'latest-failure-analysis', 'role': role, 'unit': unit, 'report': reopened})
         (lab / 'case.conf').write_text('enabled=yes\n')
         run(['systemctl', '--user', 'reset-failed', unit], work)
         run(['systemctl', '--user', 'start', unit], work)

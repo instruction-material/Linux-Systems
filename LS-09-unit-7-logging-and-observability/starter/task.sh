@@ -46,8 +46,9 @@ def main():
     errors = [row for row in rows if int(row["PRIORITY"]) <= 3]
     causes = [row for row in errors if row["MESSAGE"].startswith("case: event=config_")]
     first = causes[0] if causes else None
-    recovery = next((row for row in rows if first and row["MESSAGE"] == "case: event=ready" and int(row["__REALTIME_TIMESTAMP"]) > int(first["__REALTIME_TIMESTAMP"]) and row.get("_SYSTEMD_INVOCATION_ID") and row.get("_SYSTEMD_INVOCATION_ID") != first.get("_SYSTEMD_INVOCATION_ID")), None)
-    print(json.dumps({"unit": unit, "boot": boot, "window": [begin, end], "eventCount": len(rows), "errors": len(errors), "firstError": first["MESSAGE"] if first else None, "firstErrorTime": first["__REALTIME_TIMESTAMP"] if first else None, "recovered": recovery is not None, "recoveryTime": recovery["__REALTIME_TIMESTAMP"] if recovery else None}, sort_keys=True))
+    latest = causes[-1] if causes else None
+    recovery = next((row for row in rows if latest and row["MESSAGE"] == "case: event=ready" and int(row["__REALTIME_TIMESTAMP"]) > int(latest["__REALTIME_TIMESTAMP"]) and row.get("_SYSTEMD_INVOCATION_ID") and row.get("_SYSTEMD_INVOCATION_ID") != latest.get("_SYSTEMD_INVOCATION_ID")), None)
+    print(json.dumps({"unit": unit, "boot": boot, "window": [begin, end], "eventCount": len(rows), "errors": len(errors), "firstError": first["MESSAGE"] if first else None, "firstErrorTime": first["__REALTIME_TIMESTAMP"] if first else None, "latestError": latest["MESSAGE"] if latest else None, "latestErrorTime": latest["__REALTIME_TIMESTAMP"] if latest else None, "recovered": recovery is not None, "recoveryTime": recovery["__REALTIME_TIMESTAMP"] if recovery else None}, sort_keys=True))
     return 0
 
 
