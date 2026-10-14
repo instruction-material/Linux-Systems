@@ -1,13 +1,18 @@
 [Unit]
-Description=Linux Systems toy application
-After=network.target
+Description=Owned Linux reverse-proxy application
+StartLimitIntervalSec=30
+StartLimitBurst=3
 
 [Service]
 Type=simple
-WorkingDirectory=/opt/linux-toy-app
-ExecStart=/usr/bin/python3 /opt/linux-toy-app/app.py
-Restart=on-failure
+WorkingDirectory=%h/.local/share/linux-toy-app
 Environment=APP_PORT=8081
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/usr/bin/python3 "%h/.local/share/linux-toy-app/app.py"
+Restart=on-failure
+RestartSec=2
+StandardOutput=journal
+StandardError=journal
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target

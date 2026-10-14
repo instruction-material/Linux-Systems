@@ -26,6 +26,8 @@ jobs:
           shellcheck LS-05-unit-1-shell-foundations/{starter,solution}/task.sh LS-06-unit-3-users-groups-and-permissions/{starter,solution}/task.sh LS1-Personal-Lab-VM/{starter,solution}/lab_bootstrap_report.sh LS2-Static-Site-from-srv/{starter,solution}/deploy_static_site.sh LS6-Backup-Cron-and-Timer/{starter,solution}/backup_home.sh
       - name: Exercise actual owned Linux files and isolated serving
         run: python3 test/verify_owned_labs.py --proof output/linux-owned-labs.json
+      - name: Exercise actual app, proxy headers, failure and recovery
+        run: python3 test/verify_reverse_proxy.py --proof output/linux-reverse-proxy.json
       - name: Retain native source acceptance
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
