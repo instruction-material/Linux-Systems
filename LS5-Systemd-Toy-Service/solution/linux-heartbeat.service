@@ -1,21 +1,22 @@
 [Unit]
-Description=Linux Systems heartbeat service
-After=network-online.target
-Wants=network-online.target
+Description=Owned Linux course heartbeat
+StartLimitIntervalSec=10
+StartLimitBurst=3
 
 [Service]
 Type=simple
-User=www-data
-Group=www-data
-WorkingDirectory=/opt/linux-heartbeat
-EnvironmentFile=-/etc/default/linux-heartbeat
+WorkingDirectory=%h/.local/share/linux-heartbeat
 Environment=HEARTBEAT_INTERVAL=5
 Environment=HEARTBEAT_MESSAGE=linux-heartbeat
-ExecStart=/usr/bin/python3 /opt/linux-heartbeat/heartbeat_app.py
+Environment=HEARTBEAT_LIMIT=0
+EnvironmentFile=%h/.local/share/linux-heartbeat/heartbeat.env
+ExecStart=/usr/bin/python3 -u %h/.local/share/linux-heartbeat/heartbeat_app.py
 Restart=on-failure
-RestartSec=3
+RestartPreventExitStatus=78
+RestartSec=1
+TimeoutStopSec=5
 StandardOutput=journal
 StandardError=journal
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target
