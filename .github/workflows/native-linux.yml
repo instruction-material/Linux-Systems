@@ -51,6 +51,10 @@ jobs:
         run: python3 test/verify_logging_labs.py --proof output/linux-logging-labs.json
       - name: Verify actual configuration apply, reload, rejection and rollback
         run: python3 test/verify_editing_core.py --proof output/linux-editing-core.json
+      - name: Check optional configuration editing shell source
+        run: shellcheck LS-09-unit-4-editing-and-configuration-supplemental-2/{starter,solution}/task.sh LS-10-unit-4-editing-and-configuration-supplemental-3/{starter,solution}/task.sh
+      - name: Verify real child environments and controlled replacement recovery
+        run: python3 test/verify_editing_optional.py --proof output/linux-editing-optional.json
       - name: Retain native source acceptance
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
