@@ -201,9 +201,15 @@ try:
                 require_rows(unit, work, automatic_pid, message)
                 env_file.write_text("HEARTBEAT_INTERVAL=0\nHEARTBEAT_MESSAGE=broken-lab\nHEARTBEAT_LIMIT=0\n")
                 run(["systemctl", "--user", "restart", unit], work, expected=None)
-                failed = wait_for(unit, work, lambda s: s["ActiveState"] == "failed" and s["MainPID"] == "0" and s["Result"] == "start-limit-hit")
-                assert failed["Result"] == "start-limit-hit" and int(failed["NRestarts"]) > 0
-                assert any("HEARTBEAT_INTERVAL" in str(row.get("MESSAGE", "")) for row in journal(unit, work))
+                failed = wait_for(unit, work, lambda s: s["ActiveState"] == "failed" and s["MainPID"] == "0" and s["ExecMainStatus"] == "2" and int(s["NRestarts"]) >= 2)
+                failed_rows = journal(unit, work)
+                assert any("HEARTBEAT_INTERVAL" in str(row.get("MESSAGE", "")) for row in failed_rows)
+                assert any("Start request repeated too quickly" in str(row.get("MESSAGE", "")) for row in failed_rows)
+                time.sleep(1.2)
+                stable = properties(unit, work)
+                assert stable["ActiveState"] == "failed" and stable["MainPID"] == "0"
+                assert stable["NRestarts"] == failed["NRestarts"]
+                records.append({"kind": "start-limit-evidence", "unit": unit, "reportedResult": failed["Result"], "state": stable, "journalRows": failed_rows})
                 env_file.write_text(good_env)
                 run(["systemctl", "--user", "reset-failed", unit], work)
                 run(["systemctl", "--user", "start", unit], work)
