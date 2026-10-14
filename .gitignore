@@ -3,3 +3,7 @@ artifacts/
 *.log
 *.tmp
 .DS_Store
+
+# Supplied fabricated log fixtures are course source, not runtime logs.
+!LS-05-unit-1-shell-foundations/starter/reports/*.log
+!LS-05-unit-1-shell-foundations/solution/reports/*.log
