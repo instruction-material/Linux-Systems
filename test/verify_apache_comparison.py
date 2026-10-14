@@ -155,6 +155,45 @@ def wait_page(port, host, status, body, child):
         time.sleep(0.1)
 
 
+def process_identity(pid):
+    """Use Linux start ticks as well as PID so PID reuse cannot satisfy a wait."""
+    try:
+        # Fields after the final ')' start at field 3 (state); starttime is 22.
+        fields = Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()
+    except (FileNotFoundError, ProcessLookupError):
+        return None
+    if fields[0] in ("Z", "X", "x"):
+        return None
+    return {"pid": pid, "parentPid": int(fields[1]), "startTicks": int(fields[19])}
+
+
+def live_workers(child):
+    assert child.poll() is None, (child.args, child.returncode)
+    children = Path(f"/proc/{child.pid}/task/{child.pid}/children").read_text()
+    workers = []
+    for pid in map(int, children.split()):
+        identity = process_identity(pid)
+        if identity is not None and identity["parentPid"] == child.pid:
+            workers.append(identity)
+    return workers
+
+
+def wait_worker_generation(child, previous):
+    """A matching page alone can still come from overlapping generations."""
+    assert previous, (child.args, "No workers observed before graceful reload")
+    deadline = time.monotonic() + 5
+    while True:
+        assert child.poll() is None, (child.args, child.returncode)
+        remaining = [worker for worker in previous
+                     if process_identity(worker["pid"]) == worker]
+        current = live_workers(child)
+        if not remaining and current:
+            assert all(worker not in previous for worker in current)
+            return current
+        assert time.monotonic() < deadline, (child.args, previous, remaining, current)
+        time.sleep(0.05)
+
+
 before = source_hashes()
 assert len(before) == 11
 accepted = False
@@ -223,6 +262,7 @@ try:
                     (work / name).write_text(text)
                     run(command + ["-t"], work, env)
                 changed_and_restored = False
+                reload_generations = []
                 if role != "starter":
                     changed_apache = apache.replace('DocumentRoot "${LAB_ROOT}/public"', 'DocumentRoot "${LAB_ROOT}/second"', 1)
                     changed_nginx = nginx.replace("root public;", "root second;", 1)
@@ -232,8 +272,16 @@ try:
                         (work / "nginx.conf").write_text(n_text)
                         run(apache_command + ["-t"], work, env)
                         run(nginx_command + ["-t"], work, env)
+                        previous_workers = {"apache": live_workers(a), "nginx": live_workers(n)}
                         os.kill(a.pid, signal.SIGUSR1)
                         os.kill(n.pid, signal.SIGHUP)
+                        for label, child, reload_signal in (("apache", a, "SIGUSR1"), ("nginx", n, "SIGHUP")):
+                            previous = previous_workers[label]
+                            current = wait_worker_generation(child, previous)
+                            reload_generations.append({"server": label, "masterPid": child.pid,
+                                                       "signal": reload_signal, "before": previous, "after": current,
+                                                       "expectedBodySha256": hashlib.sha256(expected_body).hexdigest(),
+                                                       "previousWorkersRetired": True})
                         wait_page(apache_port, "linux-systems.test", 200, expected_body, a)
                         wait_page(nginx_port, "linux-systems.test", 200, expected_body, n)
                         for port, label, child in ((apache_port, "apache", a), (nginx_port, "nginx", n)):
@@ -248,7 +296,7 @@ try:
             profiles.append({"role": role, "apachePort": apache_port, "nginxPort": nginx_port,
                                  "actualLinuxSockets": True, "exactPages": True, "namedLearnerFailure": role == "starter",
                                  "rejectedSyntaxLeavesServing": True, "changedAndRestored": changed_and_restored,
-                                 "ownedListenersRemoved": True})
+                                 "ownedListenersRemoved": True, "reloadGenerations": reload_generations})
     assert len(profiles) == 3 and source_hashes() == before
     accepted = True
 finally:

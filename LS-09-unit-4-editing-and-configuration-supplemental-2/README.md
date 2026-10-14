@@ -141,7 +141,7 @@ failure, or infer a file reload from a new process launch.
 Complete environment-notes.md with predictions, actual child values, PIDs/UIDs,
 parent-state observations, file changes, restart results, overrides and both
 types of failure. Explain source versus export, file versus environment, and
-why a restart changes this program's settings. For instructor pacing, pause
+why a restart changes this program's settings. For paced discussion, pause
 after each numbered section and explain the observation before continuing.
 
 Stop each watched child with Ctrl+C and observe stopped. Preserve the evidence
