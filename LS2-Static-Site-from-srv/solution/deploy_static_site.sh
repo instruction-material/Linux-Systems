@@ -1,42 +1,27 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
-#################
-#   CONSTANTS   #
-#################
-readonly DEFAULT_SITE_ROOT="/srv/linux-systems-site"
-readonly DEFAULT_OWNER="www-data:www-data"
-readonly INDEX_FILE="index.html"
-readonly SITE_DIR_MODE="0755"
-readonly PAGE_FILE_MODE="0644"
-
-#################
-#   MAIN CODE   #
-#################
-# Read optional deployment settings from the command line
-site_root="${1:-$DEFAULT_SITE_ROOT}"
-site_owner="${2:-$DEFAULT_OWNER}"
-
-# Create the destination directory and install the static homepage
-mkdir -p "$site_root"
-install -m "$PAGE_FILE_MODE" "$INDEX_FILE" "$site_root/$INDEX_FILE"
-
-# Apply ownership when the host provides chown
-if command -v chown >/dev/null 2>&1; then
-	chown -R "$site_owner" "$site_root" 2>/dev/null || true
+[[ "$(uname -s)" == Linux ]] || { printf 'This deployment lab requires Linux.\n' >&2; exit 2; }
+[[ $# -ge 1 && $# -le 2 ]] || { printf 'Usage: bash deploy_static_site.sh SITE_ROOT [OWNER:GROUP]\n' >&2; exit 2; }
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+readonly SCRIPT_DIR
+site_root="$1"
+site_owner="${2:-}"
+[[ ! -L "$site_root" ]] || { printf 'The document root cannot be a symlink.\n' >&2; exit 2; }
+mkdir -p -- "$site_root"
+site_root="$(cd -- "$site_root" && pwd -P)"
+temporary="$(mktemp "$site_root/.index-pending-XXXXXX")"
+trap 'rm -f -- "$temporary"' EXIT
+install_page() {
+    install -m 0644 -- "$1" "$2"
+}
+install_page "$SCRIPT_DIR/index.html" "$temporary"
+# Ownership failure is fatal and occurs before replacing an earlier page.
+if [[ -n "$site_owner" ]]; then
+    chown -- "$site_owner" "$temporary"
+    chown -- "$site_owner" "$site_root"
 fi
-
-# Apply permissions when the host provides chmod
-if command -v chmod >/dev/null 2>&1; then
-	chmod "$SITE_DIR_MODE" "$site_root"
-	chmod "$PAGE_FILE_MODE" "$site_root/$INDEX_FILE"
-fi
-
-# Print follow-up checks the student can run after deployment
-cat <<EOF
-Copied static site to $site_root
-Suggested verification:
-- sudo nginx -t
-- sudo systemctl reload nginx
-- curl -I http://127.0.0.1/
-EOF
+chmod 0755 -- "$site_root"
+mv -f -- "$temporary" "$site_root/index.html"
+printf 'Published %s/index.html\n' "$site_root"
+stat -c 'mode=%a uid=%u gid=%g path=%n' -- "$site_root" "$site_root/index.html"
+printf 'Set the Nginx root to that exact path, validate configuration, then request the lab listener at http://127.0.0.1:8080/.\n'

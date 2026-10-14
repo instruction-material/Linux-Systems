@@ -1,3 +1,3 @@
 SHELL=/bin/bash
-PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-0 * * * * /usr/local/bin/backup_home.sh
+PATH=/usr/bin:/bin
+0 * * * * "$HOME/.local/bin/backup_home.sh" "$HOME/linux-systems-lab" "$HOME/backups" >> "$HOME/backups/cron.log" 2>&1

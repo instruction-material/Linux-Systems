@@ -1,9 +1,10 @@
 [Unit]
-Description=Run Linux Systems backups
+Description=Schedule the owned Linux course backup
 
 [Timer]
 OnCalendar=hourly
 Persistent=true
+Unit=linux-backup.service
 
 [Install]
 WantedBy=timers.target

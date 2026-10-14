@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+[[ "$(uname -s)" == Linux ]] || { printf "Use the Linux guest or WSL shell; host identity is not Linux readiness.\n" >&2; exit 2; }
 
 #################
 #   CONSTANTS   #
@@ -46,9 +47,10 @@ detect_linux_context() {
 echo "== Linux Systems Lab Bootstrap Report =="
 echo "Timestamp: $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
 echo "Context: $(detect_linux_context)"
-echo "User: ${USER:-unknown}"
-echo "Home: ${HOME:-unknown}"
-echo "Shell: ${SHELL:-unknown}"
+echo "Active identity: $(id -un) uid=$(id -u) groups=$(id -G)"
+echo "Configured home environment: ${HOME:-unknown}"
+echo "Script interpreter: Bash $BASH_VERSION"
+echo "Configured login shell: ${SHELL:-unknown}"
 echo "Hostname: $(hostname)"
 echo "Kernel: $(uname -sr)"
 echo "Package manager: $(detect_package_manager)"

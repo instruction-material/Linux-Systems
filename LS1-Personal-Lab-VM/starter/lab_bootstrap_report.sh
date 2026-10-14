@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 set -u
+[[ "$(uname -s)" == Linux ]] || { printf "Use the Linux guest or WSL shell; host identity is not Linux readiness.\n" >&2; exit 2; }
 
 echo "== Linux Systems Lab Bootstrap Report =="
-echo "User: ${USER:-unknown}"
-echo "Home: ${HOME:-unknown}"
-echo "Shell: ${SHELL:-unknown}"
+echo "Active identity: $(id -un) uid=$(id -u) groups=$(id -G)"
+echo "Configured home environment: ${HOME:-unknown}"
+echo "Script interpreter: Bash $BASH_VERSION"
+echo "Configured login shell: ${SHELL:-unknown}"
 echo "Hostname: $(hostname)"
 echo "Kernel: $(uname -sr)"
 echo "Working directory: $(pwd)"

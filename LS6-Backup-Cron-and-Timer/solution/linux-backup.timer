@@ -1,5 +1,5 @@
 [Unit]
-Description=Run Linux Systems backups
+Description=Schedule the owned Linux course backup
 
 [Timer]
 OnCalendar=hourly

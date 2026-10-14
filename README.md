@@ -15,3 +15,26 @@ VM, WSL instance, or remote Linux machine.
 
 Each lab includes a `starter/` directory for learners and a `solution/`
 directory for instructors or advanced review.
+
+## Owned workflow repairs and native acceptance
+
+The Shell Foundations and Permissions packs now have distinct operating tasks:
+log enumeration with trustworthy status, and an observed ancestor-traversal
+failure with a narrow correction. The lab-readiness, static-site and backup
+packs include complete readings, explicit operating boundaries and changed-case
+instructions. Backup examples use the same user identity for cron and a user
+timer, and restoration is checked independently of archive creation.
+
+Run the Linux acceptance with an ordinary account, GNU command-line tools and
+Nginx available:
+
+~~~sh
+python3 test/verify_owned_labs.py --proof output/linux-owned-labs.json
+~~~
+
+The suite covers working references, deliberately unfinished starters, four
+independent learner completions, real access observations, archive restoration
+and isolated serving. It does not infer worksheet completion, VM provisioning
+or scheduled execution. The remaining 44 generated reference scripts are still
+outside this repaired source track; their differing lesson purposes need the
+continuing course audit. The site import integration is a separate gate.

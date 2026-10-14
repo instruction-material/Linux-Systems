@@ -1,9 +1,9 @@
 [Unit]
-Description=Create a Linux Systems backup archive
+Description=Create an owned Linux course backup
 
 [Service]
 Type=oneshot
 Environment=RETENTION_COUNT=5
-ExecStart=/usr/local/bin/backup_home.sh
+ExecStart="%h/.local/bin/backup_home.sh" "%h/linux-systems-lab" "%h/backups"
 StandardOutput=journal
 StandardError=journal
