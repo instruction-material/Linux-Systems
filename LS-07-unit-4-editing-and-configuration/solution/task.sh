@@ -1,20 +1,75 @@
 #!/usr/bin/env bash
 set -euo pipefail
+umask 077
 
-#################
-#   CONSTANTS   #
-#################
-readonly SAMPLE_LOG_PATH="sample.log"
-readonly ERROR_PATTERN="ERROR"
-readonly WARNING_PATTERN="WARNING"
-readonly SUMMARY_FORMAT="errors=%s warnings=%s\n"
+if [[ $# != 2 ]]; then
+    printf 'usage: bash task.sh init|apply|rollback LAB_DIRECTORY\n' >&2
+    exit 64
+fi
+action=$1
+lab=$2
+here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+app=$here/config_app.py
+if [[ ! -d "$lab" || -L "$lab" || ! -O "$lab" ]]; then
+    printf 'use an existing owned directory, not a symbolic link\n' >&2
+    exit 73
+fi
+lab=$(realpath -- "$lab")
+if [[ "$lab" == / ]]; then
+    printf 'the filesystem root is not a lab directory\n' >&2
+    exit 73
+fi
 
-#################
-#   MAIN CODE   #
-#################
-# Count matching log entries while allowing grep to report zero matches
-error_count=$(grep -c "$ERROR_PATTERN" "$SAMPLE_LOG_PATH" || true)
-warning_count=$(grep -c "$WARNING_PATTERN" "$SAMPLE_LOG_PATH" || true)
+if [[ "$action" == init ]]; then
+    shopt -s nullglob dotglob
+    entries=("$lab"/*)
+    if (( ${#entries[@]} )); then
+        printf 'initialization requires an empty lab directory\n' >&2
+        exit 73
+    fi
+    cp -- "$here/config.json" "$lab/config.json"
+    cp -- "$here/candidate.json" "$lab/candidate.json"
+    printf 'unit4-editing-owned-v1\n' > "$lab/.editing-lab"
+    printf 'initialized %s\n' "$lab"
+    exit 0
+fi
 
-# Print the compact log summary for the lab check
-printf "$SUMMARY_FORMAT" "$error_count" "$warning_count"
+if [[ ! -f "$lab/.editing-lab" || -L "$lab/.editing-lab" ||
+      $(<"$lab/.editing-lab") != unit4-editing-owned-v1 ]]; then
+    printf 'initialize this disposable directory before changing it\n' >&2
+    exit 73
+fi
+for name in config.json candidate.json config.before.json; do
+    if [[ -L "$lab/$name" || ( -e "$lab/$name" && ( ! -f "$lab/$name" || ! -O "$lab/$name" ) ) ]]; then
+        printf 'refusing a non-owned regular file: %s\n' "$name" >&2
+        exit 73
+    fi
+done
+
+case "$action" in
+    apply)
+        # APPLY_BEGIN
+        python3 "$app" validate "$lab/config.json"
+        python3 "$app" validate "$lab/candidate.json"
+        cp -p -- "$lab/config.json" "$lab/config.before.json"
+        staged=$(mktemp "$lab/.config.XXXXXX")
+        trap 'rm -f -- "$staged"' EXIT
+        cp -- "$lab/candidate.json" "$staged"
+        chmod --reference="$lab/config.json" "$staged"
+        mv -f -- "$staged" "$lab/config.json"
+        printf 'applied; explicitly reload the owned lab process next\n'
+        # APPLY_END
+        ;;
+    rollback)
+        python3 "$app" validate "$lab/config.before.json"
+        staged=$(mktemp "$lab/.config.XXXXXX")
+        trap 'rm -f -- "$staged"' EXIT
+        cp -p -- "$lab/config.before.json" "$staged"
+        mv -f -- "$staged" "$lab/config.json"
+        printf 'restored; explicitly reload the owned lab process next\n'
+        ;;
+    *)
+        printf 'unknown action: %s\n' "$action" >&2
+        exit 64
+        ;;
+esac
