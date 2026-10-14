@@ -9,7 +9,7 @@ from pathlib import Path
 
 def in_scope(row, unit, boot, begin, end):
     # SCOPE_TASK
-    return row.get("_SYSTEMD_USER_UNIT", row.get("USER_UNIT")) == unit and row.get("_BOOT_ID") == boot and begin <= int(row["__REALTIME_TIMESTAMP"]) <= end
+    return (row.get("_SYSTEMD_USER_UNIT") == unit or row.get("USER_UNIT") == unit) and row.get("_BOOT_ID") == boot and begin <= int(row["__REALTIME_TIMESTAMP"]) <= end
 
 
 def main():

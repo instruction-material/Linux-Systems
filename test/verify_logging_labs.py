@@ -69,8 +69,8 @@ def prepare(pack, role, parent):
         if pack == CORE:
             file = work / 'task.sh'
             text = file.read_text()
-            unfinished = '    # TODO: require the requested unit, boot and inclusive time window.\n    return None'
-            replacement = '    selected_unit = row.get("_SYSTEMD_USER_UNIT") or row.get("USER_UNIT")\n    if selected_unit != unit or row.get("_BOOT_ID") != boot:\n        return False\n    stamp = int(row["__REALTIME_TIMESTAMP"])\n    return stamp >= begin and stamp <= end'
+            unfinished = '    # TODO: match either unit field, then require the boot and inclusive time window.\n    return None'
+            replacement = '    if row.get("_SYSTEMD_USER_UNIT") != unit and row.get("USER_UNIT") != unit:\n        return False\n    if row.get("_BOOT_ID") != boot:\n        return False\n    stamp = int(row["__REALTIME_TIMESTAMP"])\n    return stamp >= begin and stamp <= end'
             assert text.count(unfinished) == 1
             file.write_text(text.replace(unfinished, replacement))
         elif pack == TRANSFER:
@@ -108,7 +108,7 @@ def offline_core(work, role):
         assert 'Complete in_scope' in result['stderr']
         return {"namedUnfinishedStatus": 78}
     report = analyze_core(work, work / 'sample.log')
-    assert report['eventCount'] == 5 and report['errors'] == 1
+    assert report['eventCount'] == 6 and report['errors'] == 2
     assert report['firstError'] == 'case: event=config_missing' and report['firstErrorTime'] == '200'
     assert report['recovered'] and report['recoveryTime'] == '400'
     assert not analyze_core(work, work / 'sample.log', end=300)['recovered']
@@ -242,6 +242,11 @@ def native_core(work, role):
             assert report['firstError'] == 'case: event=config_missing' and report['recovered']
             assert report['firstErrorTime'] == errors[0]['__REALTIME_TIMESTAMP']
             assert report['recoveryTime'] == healthy[0]['__REALTIME_TIMESTAMP']
+            manager_rows = [row for row in rows if row.get('USER_UNIT') == unit]
+            assert manager_rows
+            expected_rows = [row for row in rows if (row.get('_SYSTEMD_USER_UNIT') == unit or row.get('USER_UNIT') == unit) and row.get('_BOOT_ID') == boot and begin <= int(row['__REALTIME_TIMESTAMP']) <= end]
+            assert report['eventCount'] == len(expected_rows)
+            records.append({'kind': 'unit-scope-analysis', 'role': role, 'unit': unit, 'managerRows': len(manager_rows), 'fieldCollisions': sum(bool(row.get('_SYSTEMD_USER_UNIT')) and row['_SYSTEMD_USER_UNIT'] != unit for row in manager_rows), 'expectedEvents': len(expected_rows), 'reportedEvents': report['eventCount']})
         run(['systemctl', '--user', 'stop', unit], work)
         (lab / 'case.conf').write_text('enabled=no\n')
         broken = run(['systemctl', '--user', 'start', unit], work, expected=None)
