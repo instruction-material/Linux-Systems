@@ -201,7 +201,8 @@ try:
                     sockets = run(["ss", "-H", "-ltnp", "sport = :" + str(port)], work, env)
                     assert ("127.0.0.1:" + str(port)).encode() in sockets
                     assert ("pid=" + str(child.pid) + ",").encode() in sockets
-                    assert b"0.0.0.0:" not in sockets and b"[::]:" not in sockets
+                    rows = [line.split() for line in sockets.decode().splitlines()]
+                    assert rows and all(row[3] == "127.0.0.1:" + str(port) for row in rows)
                     status = primary_status if label == "apache" else 200
                     body = primary_body if label == "apache" else primary
                     expect_page(port, "linux-systems.test", status, body)
