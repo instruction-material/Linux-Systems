@@ -62,7 +62,7 @@ Predict before each operation. After three nonempty rotations, the newest
 archive contains batch-three, the second contains batch-two and batch-one has
 expired under the count-two policy. Count archives and verify their contents;
 a successful command alone does not prove retention. Run again with the empty
-active file: notifempty should leave the archive identities and contents
+active file: notifempty leaves the archive identities and contents
 unchanged. Write a new batch to the active file to show that creation and
 ownership permit subsequent logging.
 
@@ -86,9 +86,9 @@ case "$lab" in
 esac
 ~~~
 
-The independent and instructor routes share the prediction/operation/inspection
-sequence. Review the reference after completing the policy draft; retain a
-separate saved learner attempt. Native acceptance must use actual logrotate,
+The independent and paced routes share the prediction/operation/inspection
+sequence. Compare the reference after completing the policy draft; preserve a
+separate saved attempt. Native acceptance must use actual logrotate,
 not simulated archive names. This exercise observes manually invoked retention;
 it does not claim that a scheduler or running application reopened a file.
 Reference: [logrotate manual](https://github.com/logrotate/logrotate/blob/main/logrotate.8.in).

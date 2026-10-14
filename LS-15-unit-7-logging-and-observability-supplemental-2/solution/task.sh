@@ -36,8 +36,8 @@ def main():
     entries.sort(key=lambda item: item[0])
     failures = [(stamp, row) for stamp, row in entries if is_server_failure(row)]
     responses = [(stamp, row) for stamp, row in entries if row["event"] == "complete"]
-    first = failures[0][0] if failures else None
-    recovered = any(first is not None and stamp > first and row["status"] == 200 for stamp, row in responses)
+    latest = failures[-1][0] if failures else None
+    recovered = any(latest is not None and stamp > latest and row["status"] == 200 for stamp, row in responses)
     print(json.dumps({"request": sys.argv[2], "events": len(entries), "serverFailures": len(failures), "statuses": [row["status"] for _, row in responses], "lastStatus": responses[-1][1]["status"] if responses else None, "recovered": recovered}, sort_keys=True))
     return 0
 

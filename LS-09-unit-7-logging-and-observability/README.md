@@ -15,6 +15,13 @@ window. The supplied parsing and report code then orders records, counts error
 priorities and distinguishes a later ready event in a new invocation from a
 repeated or unrelated message. The reference completes the same task.
 
+The embedded Python receives each JSON object as a dictionary named row.
+`row.get("FIELD")` reads a field without treating an absent field as a match;
+the two unit-field alternatives refer to application and manager records.
+`int` converts the validated decimal timestamp for numeric comparisons. The
+selection returns a boolean: all requested scope conditions hold together.
+Returning None marks the named unfinished task rather than selecting a row.
+
 ## Concepts and limits
 
 `systemctl --user status UNIT` describes the current invocation; `journalctl`
@@ -30,8 +37,9 @@ User-unit journal records may identify the unit with `_SYSTEMD_USER_UNIT` or
 responsibilities. First identify the application diagnostic, then corroborate
 it with the service exit status. `config_missing` means the declared file is
 absent; `config_invalid` means the file exists but its content is unsupported.
-A later `ready` event is evidence of a completed fixture invocation. Current
-service state must still be checked independently.
+A later `ready` event is evidence of a completed fixture invocation. The report retains the first and latest application errors. A later failure
+reopens the case: recovery requires a newer ready event in a different
+invocation after that latest failure. Check current service state independently.
 
 The analyzer accepts JSON-per-line records with scalar journal fields. Missing
 files, invalid JSON, unsupported field shapes and invalid windows fail with
@@ -52,8 +60,8 @@ The four case events and the informational ERROR-word message belong to this
 window. The other boot, other unit and timestamp 50 do not. The application
 cause is `case: event=config_missing` at 200, and a different invocation records
 `case: event=ready` at 400. Count priorities rather than substrings. Change the
-window to end at 300: recovery should disappear. Change the unit or boot: the
-selection should be empty. Remove the input file or damage a copy of its JSON:
+window to end at 300: recovery disappears. Change the unit or boot: the
+selection is empty. Remove the input file or damage a copy of its JSON:
 that must fail visibly rather than print a successful zero summary. Preserve
 the supplied source when making changed fixtures.
 
@@ -127,10 +135,9 @@ case "$lab" in */linux-observe.*) rm -r -- "$lab" ;; esac
 
 Explain the selected scope, first trustworthy diagnostic, why the word ERROR
 and unrelated records were rejected, the specific correction, fresh retest,
-current state and cleanup. Independent reading and instructor discussion use
-the same sequence: predict, select, explain, change one case, retest. Reference
-review follows an attempted draft and must not replace the learner's saved
-attempt. Full native acceptance exercises the actual user manager and journal,
+current state and cleanup. Independent reading and paced discussion use
+the same sequence: predict, select, explain, change one case, retest. Reference copies remain separate from saved attempts. Compare after an
+attempted draft. Full native acceptance exercises the actual user manager and journal,
 all three source roles, missing/invalid configuration, new invocations and
 cleanup; the redacted route alone does not establish that operating result.
 
