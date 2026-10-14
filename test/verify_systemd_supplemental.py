@@ -123,8 +123,8 @@ def fail_state(unit, work, code, word):
     return state
 
 
-def heartbeat(unit, work, pid, message):
-    rows = journal_match(unit, work, lambda r: r.get("_PID") == str(pid) and str(r.get("MESSAGE", "")).startswith(message + ": heartbeat "))
+def heartbeat(unit, work, pid, message, after=0):
+    rows = journal_match(unit, work, lambda r: r.get("_PID") == str(pid) and str(r.get("MESSAGE", "")).startswith(message + ": heartbeat ") and int(r.get("__REALTIME_TIMESTAMP", "0")) >= after)
     values = Path("/proc", str(pid), "environ").read_bytes().split(b"\0")
     assert ("HEARTBEAT_MESSAGE=" + message).encode() in values
     records.append({"kind": "actual-environment", "unit": unit, "pid": pid, "message": message, "rows": rows})
@@ -309,10 +309,11 @@ try:
                         if role != "starter":
                             assert str(install / "base.env") not in current["EnvironmentFiles"]
                             good = (install / "override.env").read_text()
+                            edited_at = time.time_ns() // 1000
                             (install / "override.env").write_text(good.replace("extension-heartbeat", "edited-heartbeat"))
                             time.sleep(0.25)
                             assert int(properties(unit, work)["MainPID"]) == pid
-                            heartbeat(unit, work, pid, "extension-heartbeat")
+                            heartbeat(unit, work, pid, "extension-heartbeat", after=edited_at)
                             control(unit, work, "restart")
                             pid = owned_process(unit, work, installed_app, pid)
                             heartbeat(unit, work, pid, "edited-heartbeat")
