@@ -93,6 +93,10 @@ jobs:
           shellcheck LS-02-ls0-setup-and-tooling-supplemental-3/{starter,solution}/*.sh
       - name: Verify actual tool lookup, execution failures and interpreter arguments
         run: python3 test/verify_setup_optional.py --proof output/linux-setup-optional.json
+      - name: Check scheduling continuation shell source
+        run: shellcheck LS-17-unit-8-scheduling-and-automation-supplemental-2/{starter,solution}/task.sh LS-18-unit-8-scheduling-and-automation-supplemental-3/{starter,solution}/task.sh
+      - name: Verify actual calendar forecasts and owned repeating timers
+        run: python3 test/verify_scheduling_optional.py --proof output/linux-scheduling-optional.json
       - name: Retain native source acceptance
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
