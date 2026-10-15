@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
-# TODO: summarize the log file more carefully.
-grep -c "ERROR" sample.log
+script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd -P)
+exec python3 "$script_dir/lock_observer.py" "$@"

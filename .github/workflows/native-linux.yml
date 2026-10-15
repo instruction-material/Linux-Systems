@@ -101,6 +101,10 @@ jobs:
         run: shellcheck LS-23-unit-11-web-servers-supplemental-2/{starter,solution}/task.sh LS-24-unit-11-web-servers-supplemental-3/{starter,solution}/task.sh
       - name: Verify actual host defaults and conditional HTTP representations
         run: python3 test/verify_web_optional.py --proof output/linux-web-optional.json
+      - name: Check deployment studio shell source
+        run: shellcheck LS-01-linux-systems-lab-14/{starter,solution}/task.sh LS-27-applied-studio-14-linux-systems-lab-14-supplemental-2/{starter,solution}/task.sh LS-28-applied-studio-14-linux-systems-lab-14-supplemental-3/{starter,solution}/task.sh
+      - name: Verify actual release rollback, payload integrity and publisher locks
+        run: python3 test/verify_deployment_studio.py --proof output/linux-deployment-studio.json
       - name: Retain native source acceptance
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
