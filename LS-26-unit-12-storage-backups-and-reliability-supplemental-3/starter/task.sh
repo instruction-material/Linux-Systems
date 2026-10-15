@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
-# TODO: summarize the log file more carefully.
-grep -c "ERROR" sample.log
+script_dir="$(CDPATH='' cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+exec python3 "$script_dir/storage_lab.py" "$@"
