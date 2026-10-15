@@ -72,7 +72,9 @@ try:
         first = cwd / "first.json"
         assert run(launch + ["--report", str(first)], cwd)[0] == 0
         actual = json.loads(first.read_text())
-        assert actual["package"]["Status"] == "install ok installed"
+        assert actual["package"]["Status"].split()[1:] == ["ok", "installed"]
+        assert actual["state"]["selection"] == actual["package"]["Status"].split()[0]
+        assert actual["state"]["errorFlag"] == "ok" and actual["state"]["current"] == "installed"
         # Query independently, rather than trusting the collector's installed flag.
         status, stdout, _ = run(["dpkg-query", "-W", "-f=${Version}\\n${Architecture}\\n${Status}\\n", "bash"], cwd)
         assert status == 0

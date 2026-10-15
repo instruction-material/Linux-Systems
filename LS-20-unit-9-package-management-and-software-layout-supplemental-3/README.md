@@ -141,7 +141,10 @@ bash task.sh audit --lab "$lab"
 ```
 
 Require the first removal to fail without breaking the working installed
-pair. Remove the dependent first, then the base. Verify the app and base
+pair. The base can now show `deinstall ok installed`: its requested action
+changed, while its current state and files remain installed. Read all three
+status fields; the requested action does not prove removal. Remove the
+dependent first, then the base. Verify the app and base
 payload paths are gone and the separate database has no installed lab
 packages. Record archive, dpkg-log and operation-log retention separately
 from removal of installed payloads. Keep an outside sentinel unchanged.

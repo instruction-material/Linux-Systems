@@ -208,7 +208,7 @@ try:
         assert invoke(cwd, lab, 'audit').strip() == b''
         invoke(cwd, lab, 'remove-base', status=1)
         query(cwd, lab, 'linux-layout-app', 'install ok installed', '1.0')
-        query(cwd, lab, 'linux-layout-base', 'install ok installed', '2.0')
+        query(cwd, lab, 'linux-layout-base', 'deinstall ok installed', '2.0')
         assert invoke(cwd, lab, 'run') == b'dependency-demo ready base=2.0\n'
         invoke(cwd, lab, 'remove-app')
         invoke(cwd, lab, 'remove-base')
@@ -244,6 +244,7 @@ try:
                              runtimeWorksBeforeConfiguration=True, actualConfiguredState=True,
                              actualUpgrade=True, consistencyAuditClean=True,
                              dependentRemovalRejected=True, reverseOrderRemoval=True,
+                             requestedRemovalDistinctFromInstalledState=True,
                              actualPayloadsRemoved=True, changedBaseFirstSequence=True,
                              alteredArchiveRejectedBeforeChange=True, intermediateSymlinkRejected=True,
                              outsideSentinelUnchanged=True, worksheetCompletionNotInferred=True,

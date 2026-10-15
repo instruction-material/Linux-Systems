@@ -64,7 +64,8 @@ def collect(package, executable):
     if len(values) != len(fields):
         raise RuntimeError("unexpected package metadata shape")
     metadata = dict(zip(fields, values))
-    if metadata["Status"] != "install ok installed":
+    status_fields = metadata["Status"].split()
+    if len(status_fields) != 3 or status_fields[1:] != ["ok", "installed"]:
         raise RuntimeError("package is not fully installed: " + metadata["Status"])
     names = command(["dpkg-query", "--listfiles", package], records).splitlines()
     listed = []
@@ -96,6 +97,7 @@ def collect(package, executable):
     # A successful search identifies an owner, which can differ from --package.
     return dict(schemaVersion=1, capturedAt=datetime.datetime.now(datetime.timezone.utc).isoformat(),
                 platform=platform.system(), uid=os.geteuid(), package=metadata,
+                state=dict(selection=status_fields[0], errorFlag=status_fields[1], current=status_fields[2]),
                 files=listed, executable=dict(requested=executable, resolved=resolved,
                                             ownershipQueries=ownership,
                                             tracked=any(row["status"] == 0 for row in ownership)),

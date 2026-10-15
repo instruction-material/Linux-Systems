@@ -65,8 +65,11 @@ actual values. Exit status zero confirms collection, not completion of the
 learning tasks. `learnerWorksheetCompletionInferred` remains false.
 
 `package_report.py` runs the queries with an explicit argument list, records
-their actual status and timing, and rejects a package whose state is not
-`install ok installed`. No missing-input error is converted into an empty
+their actual status and timing, and requires an `ok` error flag and current
+state `installed`. The full status also includes a separate requested action:
+`hold ok installed` and `deinstall ok installed` can still describe installed
+files. Read the report's `state` fields separately; a requested removal is not
+proof of completed removal. No missing-input error is converted into an empty
 successful count. A report is created only after the queries complete. Its
 mode is private to the current account and an existing report is not replaced.
 
