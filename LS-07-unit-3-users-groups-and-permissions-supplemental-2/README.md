@@ -50,7 +50,7 @@ cat access.json
 ls -la -- "$lab_root"
 ~~~
 
-The parent should be empty again after the run. In the complete result,
+Verify that the parent is empty again after the run. In the complete result,
 observationsCompleted describes actual operations; allPredictionsMatch checks
 only the program's model. The starter's named TODO incorrectly predicts unlink
 from the file's write bit. Repair it using owner write AND owner search on the

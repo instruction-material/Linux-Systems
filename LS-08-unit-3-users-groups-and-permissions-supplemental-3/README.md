@@ -42,8 +42,8 @@ cat mask-0022.err
 cat mask-0022.json
 ~~~
 
-Predict 0644 for the new regular file and 0755 for the new directory. The
-existing document should retain 0640 and its original checksum. The absolute
+Predict 0644 for the new regular file and 0755 for the new directory. Check that the
+existing document retains 0640 and its original checksum. The absolute
 workspace, inherited mask and observed values must come from this run.
 
 The starter's named TODO incorrectly uses a requested 0777 for a regular
@@ -110,11 +110,11 @@ printf 'Review before removal: %q\n' "$lab_root" "$manual_root"
 rm -r -- "$lab_root" "$manual_root"
 ~~~
 
-The workspace should be empty after every completed observation. Complete five
-notes tasks: the mode prediction table, the starter repair, an independent
+Verify that the workspace is empty after every completed observation. Complete
+five notes tasks: the mode prediction table, the starter repair, an independent
 Bash/stat comparison, changed/failed/recovered inputs, and verified mask and
-filesystem restoration. The reference supplies a method rather than a saved
-answer for the learner's actual observations.
+filesystem restoration. Use the reference method to check the explanation and retain independently
+recorded observations for this run.
 
 Primary references: [Linux umask](https://man7.org/linux/man-pages/man2/umask.2.html)
 and [GNU file permissions](https://www.gnu.org/software/coreutils/manual/html_node/File-permissions.html).
