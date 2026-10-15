@@ -148,7 +148,7 @@ def integrity(data, target, complete, reverse):
                 assert digest(expected) == item['sha256']
         assert step['afterTarget'] == ('release-b' if step['integrityAccepted'] else 'release-a')
         for kind in ['health', 'index']:
-            label = step['label'] + ' ' + kind
+            label = step['label'] + ' ' + ('page' if kind == 'index' else kind)
             assert requests[label]['status'] == 200
             release = 'release-b' if step['integrityAccepted'] else 'release-a'
             expected = (target / (release + '-' + kind + '.txt')).read_bytes()

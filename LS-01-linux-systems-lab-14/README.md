@@ -1,7 +1,10 @@
 # Readiness Gates and Reversible Release Activation
 
-This required Service Deployment Studio project combines earlier static
-serving and process-operation habits into a controlled deployment sequence.
+This central project belongs to the optional Service Deployment Studio in
+the Linux Integration Studio Archive. It combines earlier static serving and
+process-operation habits into a controlled deployment sequence. Completing
+this studio is optional; Operations Capstone remains the required integration
+project.
 The question is whether an activated candidate is the intended ready release,
 and what becomes visible after a rejected candidate is rolled back. The
 manifest transfer separately checks payload integrity; the concurrency
