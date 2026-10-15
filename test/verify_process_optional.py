@@ -236,8 +236,9 @@ def retain_descendants(evidence, worker, work, parent):
     for pid in children:
         begin = next(x for x in evidence if (x["event"] == "spawned" and x["childPid"] == pid)
                      or (x["event"] == "grandchild_observed" and x["child"]["pid"] == pid))
+        birth_parent = begin["child"]["ppid"] if begin["event"] == "grandchild_observed" else parent
         record("start", pid, [sys.executable, str(worker)], work, begin["at"],
-               actualParentPid=parent, forkedDescendant=True)
+               actualParentPid=birth_parent, forkedDescendant=True)
         record("end", pid, [sys.executable, str(worker)], work, begin["at"],
                endTime=ended[pid]["at"], exitCode=ended[pid]["status"],
                childProcessGroupCleanup="owned descendant actually waited by adopter", forkedDescendant=True)
@@ -462,7 +463,7 @@ try:
             adopted_case(worker, work, role, "1", "normal")
             adopted_case(worker, work, role, "0.2", "changed")
             adopted_case(worker, work, role, "10", "interrupted", interrupt=True)
-            adopted_case(worker, work, role, "10", "interrupted-adoption", interrupt=True, after_adoption=True)
+            adopted_case(worker, work, role, "1", "interrupted-adoption", interrupt=True, after_adoption=True)
             adopted_case(worker, work, role, "1", "lost-display", display_closed=True)
             existing = work / "existing-record.jsonl"
             existing.write_bytes(b"preserved earlier observation\n")
