@@ -1,20 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
-#################
-#   CONSTANTS   #
-#################
-readonly SAMPLE_LOG_PATH="sample.log"
-readonly ERROR_PATTERN="ERROR"
-readonly WARNING_PATTERN="WARNING"
-readonly SUMMARY_FORMAT="errors=%s warnings=%s\n"
-
-#################
-#   MAIN CODE   #
-#################
-# Count matching log entries while allowing grep to report zero matches
-error_count=$(grep -c "$ERROR_PATTERN" "$SAMPLE_LOG_PATH" || true)
-warning_count=$(grep -c "$WARNING_PATTERN" "$SAMPLE_LOG_PATH" || true)
-
-# Print the compact log summary for the lab check
-printf "$SUMMARY_FORMAT" "$error_count" "$warning_count"
+[[ $(uname -s) == Linux && $EUID -gt 0 ]] || { printf 'Use an ordinary account in an owned Linux lab.\n' >&2; exit 2; }
+if (( $# < 1 )); then
+    printf 'usage: bash task.sh OWNED_BASH_SCRIPT [ARGUMENT...]\n' >&2
+    exit 2
+fi
+target=$1
+shift
+[[ -f $target && ! -L $target && -O $target ]] || { printf 'Use an owned ordinary nonsymlink script.\n' >&2; exit 2; }
+case $target in
+    /*) ;;
+    *) target=$PWD/$target ;;
+esac
+# The inspected program requires Bash; preserve each original argument.
+BASH_ENV=/dev/null exec "$BASH" --noprofile --norc "$target" "$@"
