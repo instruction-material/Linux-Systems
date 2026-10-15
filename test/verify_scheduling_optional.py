@@ -29,6 +29,9 @@ def digest(raw):
     return hashlib.sha256(raw).hexdigest()
 def hashes():
     return {str(f.relative_to(ROOT)):digest(f.read_bytes()) for p in PACKS for f in sorted((ROOT/p).rglob('*')) if f.is_file()}
+def save_observations():
+    args.proof.with_suffix('.observations.json').write_text(json.dumps(observations,indent=2)+'\n')
+    args.proof.with_suffix('.processes.jsonl').write_text(''.join(json.dumps(e)+'\n' for e in events))
 def run(case,command,cwd,expected=None,env=None,interrupt_workspace=None):
     child=subprocess.Popen([str(x) for x in command],cwd=cwd,env=environment if env is None else env,
                            stdin=subprocess.DEVNULL,stdout=subprocess.PIPE,stderr=subprocess.PIPE,start_new_session=True)
@@ -57,6 +60,7 @@ def run(case,command,cwd,expected=None,env=None,interrupt_workspace=None):
         raise
     finally:
         events.append(dict(entry,event='end',endTime=time.time(),exitCode=child.returncode,childProcessGroupCleanup=cleanup))
+        save_observations()
     try:os.killpg(child.pid,0)
     except ProcessLookupError:pass
     else:
@@ -64,6 +68,7 @@ def run(case,command,cwd,expected=None,env=None,interrupt_workspace=None):
         raise AssertionError('The caller left an owned subprocess running')
     row={'case':case,'command':[str(x) for x in command],'cwd':str(cwd),'status':child.returncode,'stdout':out.decode(),'stderr':err.decode()}
     observations.append(row)
+    save_observations()
     if expected is not None:assert row['status']==expected,row
     return row
 def dates(report):
@@ -141,7 +146,7 @@ with tempfile.TemporaryDirectory(prefix='linux-scheduling-') as tmp:
                 for label,base,expression,expected_dates in cases:
                     row=run(label,['bash',task,base,expression],caller,0)
                     report=calendar_report(row,base,expression,complete)
-                    actual=dates(report);assert len(actual)==3
+                    actual=dates(report);assert len(actual)==3,{'case':label,'actual':actual,'rawToolOutput':report['tool']['stdout']}
                     if complete:assert actual==expected_dates
                     else:assert actual!=expected_dates and all(int(x[0][:4])>=2026 for x in actual)
                 base,expression=cases[0][1:3]
