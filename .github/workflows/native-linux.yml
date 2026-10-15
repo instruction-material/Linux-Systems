@@ -20,7 +20,7 @@ jobs:
       - name: Install native validation tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y nginx shellcheck apache2-bin dbus-user-session logrotate iproute2 iputils-ping curl dnsutils
+          sudo apt-get install -y nginx shellcheck apache2-bin dbus-user-session logrotate iproute2 iputils-ping curl dnsutils coreutils util-linux
       - name: Check corrected shell source
         run: |
           shellcheck LS-05-unit-1-shell-foundations/{starter,solution}/task.sh LS-06-unit-3-users-groups-and-permissions/{starter,solution}/task.sh LS1-Personal-Lab-VM/{starter,solution}/lab_bootstrap_report.sh LS2-Static-Site-from-srv/{starter,solution}/deploy_static_site.sh LS6-Backup-Cron-and-Timer/{starter,solution}/backup_home.sh
@@ -79,6 +79,10 @@ jobs:
         run: shellcheck LS-03-unit-1-shell-foundations-supplemental-2/{starter,solution}/task.sh LS-04-unit-1-shell-foundations-supplemental-3/{starter,solution}/task.sh
       - name: Verify literal filename streams and original pipeline failures
         run: python3 test/verify_shell_optional.py --proof output/linux-shell-optional.json
+      - name: Check filesystem observation shell source
+        run: shellcheck LS-05-unit-2-filesystem-hierarchy-and-directory-purpose-supplemental-2/{starter,solution}/task.sh LS-06-unit-2-filesystem-hierarchy-and-directory-purpose-supplemental-3/{starter,solution}/task.sh
+      - name: Verify actual logical paths and live filesystem reads
+        run: python3 test/verify_filesystem_optional.py --proof output/linux-filesystem-optional.json
       - name: Retain native source acceptance
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
