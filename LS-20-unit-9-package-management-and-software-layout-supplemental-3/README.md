@@ -75,7 +75,10 @@ printf 'RUNTIME_STATUS=%s\n' "$?"
 
 Expect a nonzero install status and an app that is unpacked but not configured.
 `query` asks the separate database for both packages; its own status can be
-nonzero while the base is absent. Retain stdout, stderr and status separately.
+nonzero while the base is absent. It can also succeed when the dependency name
+has a recorded `not-installed` entry. Query success means an entry was found,
+not that its package is installed. Read the status field and confirm that the
+base payload is absent. Retain stdout, stderr and status separately.
 `audit` identifies the incomplete package. The unpacked program should report
 a missing dependency file and exit 1. This failure is an intended observation,
 not a reason to continue as though installation succeeded.

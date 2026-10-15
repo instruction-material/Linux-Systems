@@ -79,7 +79,12 @@ def query(cwd, lab, package, state=None, version=None):
     if state:
         assert status == 0 and stdout.decode().splitlines() == [version, state], (package, status, stdout, stderr)
     else:
-        assert b"install ok installed" not in stdout
+        assert status in (0, 1), (package, status, stdout, stderr)
+        if status == 0:
+            values = stdout.decode().splitlines()
+            assert len(values) == 2 and values[1].split()[-1] == 'not-installed', (package, values)
+        else:
+            assert not stdout.strip(), (package, stdout)
     return dict(status=status, stdout=stdout.decode(), stderr=stderr.decode())
 
 
@@ -115,6 +120,7 @@ try:
             invoke(cwd, lab, 'build', version)
             binary = lab / 'builds' / version / 'layout-demo'
             assert run([str(binary), '--version'], cwd)[:2] == (0, (version + '\n').encode())
+            assert run([str(binary), '--status'], cwd)[:2] == (0, ('manual-source build version=' + version + '\n').encode())
             assert run([str(binary), '--bad-option'], cwd)[0] == 2
             invoke(cwd, lab, 'archive', version)
             archive = lab / 'archives' / (version + '.tar.gz')
@@ -184,7 +190,8 @@ try:
         invoke(cwd, lab, 'install-app', status=1)
         assert (lab / 'root/usr/bin/linux-layout-demo.py').is_file()
         query(cwd, lab, 'linux-layout-app', 'install ok unpacked', '1.0')
-        assert query(cwd, lab, 'linux-layout-base')['status'] != 0
+        absent_base = query(cwd, lab, 'linux-layout-base')
+        assert not (lab / 'root/usr/share/linux-layout-lab/base-version.txt').exists()
         assert b'linux-layout-app' in invoke(cwd, lab, 'audit')
         invoke(cwd, lab, 'run', status=1)
         invoke(cwd, lab, 'install-base', '1.0')
@@ -242,8 +249,13 @@ try:
                              outsideSentinelUnchanged=True, worksheetCompletionNotInferred=True,
                              loggedInnerLifecycles=lifecycles))
 finally:
-    shutil.rmtree(temporary)
-    args.proof.with_suffix('.processes.jsonl').write_text(''.join(json.dumps(row) + '\n' for row in records))
+    try:
+        for path in temporary.glob('*/operations.jsonl'):
+            (args.proof.parent / (path.parent.name + '-operations.jsonl')).write_bytes(path.read_bytes())
+        args.proof.with_suffix('.observations.json').write_text(json.dumps(observations, indent=2) + '\n')
+        args.proof.with_suffix('.processes.jsonl').write_text(''.join(json.dumps(row) + '\n' for row in records))
+    finally:
+        shutil.rmtree(temporary)
 assert hashes() == before and digest(host_database) == host_before
 proof = dict(accepted=True, platform=platform.system(), uid=os.geteuid(), profiles=profiles,
              observations=observations, sourceHashes=before, sourceUnchanged=True,
