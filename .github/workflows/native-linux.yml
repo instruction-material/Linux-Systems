@@ -59,6 +59,10 @@ jobs:
         run: python3 test/verify_process_core.py --proof output/linux-process-core.json
       - name: Verify actual pipeline groups, statuses, zombies and adoption
         run: python3 test/verify_process_optional.py --proof output/linux-process-optional.json
+      - name: Check package investigation shell source
+        run: shellcheck LS-10-unit-9-package-management-and-software-layout/{starter,solution}/task.sh
+      - name: Verify installed package metadata, layout and report preservation
+        run: python3 test/verify_package_core.py --proof output/linux-package-core.json
       - name: Retain native source acceptance
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
