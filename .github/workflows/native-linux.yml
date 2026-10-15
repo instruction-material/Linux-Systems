@@ -109,6 +109,10 @@ jobs:
         run: shellcheck LS-04-linux-systems-lab-17/{starter,solution}/task.sh
       - name: Verify actual capstone identity, manager, timer, proxy and restore
         run: python3 test/verify_operations_capstone.py --proof output/linux-operations-capstone.json
+      - name: Check capstone recovery continuation shell source
+        run: shellcheck LS-33-applied-studio-17-linux-systems-lab-17-supplemental-2/{starter,solution}/task.sh LS-34-applied-studio-17-linux-systems-lab-17-supplemental-3/{starter,solution}/task.sh
+      - name: Verify actual recovery-point policies and independent restored state
+        run: python3 test/verify_capstone_recovery.py --proof output/linux-capstone-recovery.json
       - name: Retain native source acceptance
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
