@@ -1,20 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
-#################
-#   CONSTANTS   #
-#################
-readonly SAMPLE_LOG_PATH="sample.log"
-readonly ERROR_PATTERN="ERROR"
-readonly WARNING_PATTERN="WARNING"
-readonly SUMMARY_FORMAT="errors=%s warnings=%s\n"
-
-#################
-#   MAIN CODE   #
-#################
-# Count matching log entries while allowing grep to report zero matches
-error_count=$(grep -c "$ERROR_PATTERN" "$SAMPLE_LOG_PATH" || true)
-warning_count=$(grep -c "$WARNING_PATTERN" "$SAMPLE_LOG_PATH" || true)
-
-# Print the compact log summary for the lab check
-printf "$SUMMARY_FORMAT" "$error_count" "$warning_count"
+role_root=$(CDPATH="" cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
+if (( $# == 0 )); then
+    printf 'usage: bash task.sh {check|app|backup|render} [arguments...]\n' >&2
+    exit 2
+fi
+command=$1
+shift
+case "$command" in
+    check) exec python3 "$role_root/app.py" --check "$@" ;;
+    app) exec python3 "$role_root/app.py" "$@" ;;
+    backup) exec python3 "$role_root/backup.py" "$@" ;;
+    render) exec python3 "$role_root/render_lab.py" "$@" ;;
+    *) printf 'unknown project action\n' >&2; exit 2 ;;
+esac

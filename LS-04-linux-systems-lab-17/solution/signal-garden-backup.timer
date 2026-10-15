@@ -1,0 +1,11 @@
+[Unit]
+Description=Owned bounded backup schedule @@UNIT@@
+
+[Timer]
+OnActiveSec=@@BACKUP_DELAY@@s
+AccuracySec=100ms
+Unit=@@UNIT@@-backup.service
+RemainAfterElapse=yes
+
+[Install]
+WantedBy=timers.target
