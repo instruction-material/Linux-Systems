@@ -71,6 +71,10 @@ jobs:
         run: shellcheck LS-11-unit-10-networking-from-a-systems-view/{starter,solution}/task.sh LS-21-unit-10-networking-from-a-systems-view-supplemental-2/{starter,solution}/task.sh LS-22-unit-10-networking-from-a-systems-view-supplemental-3/{starter,solution}/task.sh
       - name: Verify actual interface, socket, HTTP and DNS diagnostics
         run: python3 test/verify_network_labs.py --proof output/linux-network-labs.json
+      - name: Check storage investigation shell source
+        run: shellcheck LS-12-unit-12-storage-backups-and-reliability/{starter,solution}/task.sh LS-25-unit-12-storage-backups-and-reliability-supplemental-2/{starter,solution}/task.sh LS-26-unit-12-storage-backups-and-reliability-supplemental-3/{starter,solution}/task.sh
+      - name: Verify actual capacity, separate restores, corruption and retention
+        run: python3 test/verify_storage_labs.py --proof output/linux-storage-labs.json
       - name: Retain native source acceptance
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
