@@ -92,6 +92,6 @@ complete this record or establish that a browser cache was exercised.
 
 Primary references: [Nginx ETag and modification-date directives](https://nginx.org/en/docs/http/ngx_http_core_module.html#etag),
 [Nginx response headers](https://nginx.org/en/docs/http/ngx_http_headers_module.html),
-and [HTTP conditional requests](https://www.rfc-editor.org/rfc/rfc9110.html#name-conditional-requests).,
+and [HTTP conditional requests](https://www.rfc-editor.org/rfc/rfc9110.html#name-conditional-requests),
 [static-file ETag implementation](https://github.com/nginx/nginx/blob/release-1.24.0/src/http/ngx_http_core_module.c#L1577-L1580),
 and [HTTP cache freshness](https://www.rfc-editor.org/rfc/rfc9111.html#name-max-age-2).
