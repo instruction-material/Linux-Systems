@@ -72,7 +72,7 @@ def run(case,command,cwd,expected=None,env=None,interrupt_workspace=None):
     if expected is not None:assert row['status']==expected,row
     return row
 def dates(report):
-    return re.findall(r'(?:Next elapse|Iter\. #\d+):\s+\S+ (\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) UTC',report['tool']['stdout'])
+    return re.findall(r'(?:Next elapse|Iter(?:ation|\.) #\d+):\s+\S+ (\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) UTC',report['tool']['stdout'])
 def calendar_report(row,base,expression,complete):
     assert not row['stderr']
     report=json.loads(row['stdout'])
