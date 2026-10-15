@@ -1,20 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
-#################
-#   CONSTANTS   #
-#################
-readonly SAMPLE_LOG_PATH="sample.log"
-readonly ERROR_PATTERN="ERROR"
-readonly WARNING_PATTERN="WARNING"
-readonly SUMMARY_FORMAT="errors=%s warnings=%s\n"
-
-#################
-#   MAIN CODE   #
-#################
-# Count matching log entries while allowing grep to report zero matches
-error_count=$(grep -c "$ERROR_PATTERN" "$SAMPLE_LOG_PATH" || true)
-warning_count=$(grep -c "$WARNING_PATTERN" "$SAMPLE_LOG_PATH" || true)
-
-# Print the compact log summary for the lab check
-printf "$SUMMARY_FORMAT" "$error_count" "$warning_count"
+unset CDPATH
+[[ $(uname -s) == Linux && $EUID -gt 0 ]] || { printf 'Use an ordinary account in an owned Linux lab.\n' >&2; exit 2; }
+[[ $# -eq 1 && -d "$1" ]] || { printf 'Usage: bash task.sh existing-directory\n' >&2; exit 2; }
+builtin cd -L -- "$1"
+printf 'logical\0%s\0' "$PWD"
+(
+    builtin cd -P -- .
+    printf 'physical\0%s\0' "$PWD"
+)
+(
+    builtin cd -L -- ..
+    printf 'logical_parent\0%s\0' "$PWD"
+)
+(
+    builtin cd -P -- ..
+    printf 'physical_parent\0%s\0' "$PWD"
+)
