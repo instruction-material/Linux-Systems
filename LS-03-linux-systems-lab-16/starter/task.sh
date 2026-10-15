@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
-# TODO: summarize the log file more carefully.
-grep -c "ERROR" sample.log
+export PYTHONDONTWRITEBYTECODE=1
+exec python3 "$(dirname "${BASH_SOURCE[0]}")/task.py" "$@"
