@@ -113,6 +113,10 @@ jobs:
         run: shellcheck LS-33-applied-studio-17-linux-systems-lab-17-supplemental-2/{starter,solution}/task.sh LS-34-applied-studio-17-linux-systems-lab-17-supplemental-3/{starter,solution}/task.sh
       - name: Verify actual recovery-point policies and independent restored state
         run: python3 test/verify_capstone_recovery.py --proof output/linux-capstone-recovery.json
+      - name: Check observability studio shell source
+        run: shellcheck LS-02-linux-systems-lab-15/{starter,solution}/task.sh LS-29-applied-studio-15-linux-systems-lab-15-supplemental-2/{starter,solution}/task.sh LS-30-applied-studio-15-linux-systems-lab-15-supplemental-3/{starter,solution}/task.sh
+      - name: Verify real scheduled output, invocation correlation and progress budgets
+        run: python3 test/verify_observability_studio.py --proof output/linux-observability-studio.json
       - name: Retain native source acceptance
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
