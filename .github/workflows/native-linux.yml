@@ -20,7 +20,7 @@ jobs:
       - name: Install native validation tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y nginx shellcheck apache2-bin dbus-user-session logrotate
+          sudo apt-get install -y nginx shellcheck apache2-bin dbus-user-session logrotate iproute2 iputils-ping curl dnsutils
       - name: Check corrected shell source
         run: |
           shellcheck LS-05-unit-1-shell-foundations/{starter,solution}/task.sh LS-06-unit-3-users-groups-and-permissions/{starter,solution}/task.sh LS1-Personal-Lab-VM/{starter,solution}/lab_bootstrap_report.sh LS2-Static-Site-from-srv/{starter,solution}/deploy_static_site.sh LS6-Backup-Cron-and-Timer/{starter,solution}/backup_home.sh
@@ -67,6 +67,10 @@ jobs:
         run: shellcheck LS-19-unit-9-package-management-and-software-layout-supplemental-2/{starter,solution}/task.sh LS-20-unit-9-package-management-and-software-layout-supplemental-3/{starter,solution}/task.sh
       - name: Verify real source builds, manual releases and isolated dpkg recovery
         run: python3 test/verify_package_optional.py --proof output/linux-package-optional.json
+      - name: Check networking shell source
+        run: shellcheck LS-11-unit-10-networking-from-a-systems-view/{starter,solution}/task.sh LS-21-unit-10-networking-from-a-systems-view-supplemental-2/{starter,solution}/task.sh LS-22-unit-10-networking-from-a-systems-view-supplemental-3/{starter,solution}/task.sh
+      - name: Verify actual interface, socket, HTTP and DNS diagnostics
+        run: python3 test/verify_network_labs.py --proof output/linux-network-labs.json
       - name: Retain native source acceptance
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a

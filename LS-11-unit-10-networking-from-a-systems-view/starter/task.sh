@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
-# TODO: summarize the log file more carefully.
-grep -c "ERROR" sample.log
+source_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+exec python3 "$source_dir/network_lab.py" "$@"
