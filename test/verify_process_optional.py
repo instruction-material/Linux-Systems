@@ -208,8 +208,8 @@ class Terminal:
                    childProcessGroupCleanup="owned terminal job stopped and reaped")
 
 
-before = hashes()
-assert len(before) == 10
+source_before = hashes()
+assert len(source_before) == 10
 accepted = False
 
 
@@ -491,13 +491,13 @@ try:
         assert not work.exists()
         observations.append({"kind": "cleanup", "role": role,
                              "allOwnedProcessesReaped": True, "temporaryDirectoryRemoved": True})
-    assert len(profiles) == 6 and hashes() == before
+    assert len(profiles) == 6 and hashes() == source_before
     accepted = True
 finally:
     signal.alarm(0)
     args.proof.with_suffix(".processes.jsonl").write_text("".join(json.dumps(x) + "\n" for x in processes))
     args.proof.write_text(json.dumps({"accepted": accepted, "platform": platform.system().lower(),
-                                     "sourceHashes": before, "sourceUnchanged": hashes() == before,
+                                     "sourceHashes": source_before, "sourceUnchanged": hashes() == source_before,
                                      "profiles": profiles, "observations": observations,
                                      "worksheetCompletionNotInferred": True}, indent=2) + "\n")
 print(json.dumps({"accepted": accepted, "profiles": len(profiles), "observations": len(observations)}))
