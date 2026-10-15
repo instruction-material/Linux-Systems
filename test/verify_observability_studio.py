@@ -66,8 +66,11 @@ def invoke(case, command, cwd, expected, interrupt_parent=None):
          'status':child.returncode,'stdout':out.decode(),'stderr':err.decode()}
     ROWS.append(row)
     assert child.returncode==expected,row
-    assert not err if out else err
-    return json.loads(out) if out else None
+    if case.endswith('refusal'):
+        assert not out and err, row
+        return None
+    assert out and not err, row
+    return json.loads(out)
 
 
 def completed(role,repair):
@@ -81,6 +84,7 @@ def completed(role,repair):
 def check(data,kind,complete,interrupted=False):
     assert data['kind']==kind and data['uid']==os.geteuid() and data['sourceUnchanged']
     assert data['ownedCaseRemoved'] and data['workspaceEmpty'] and data['failure'] is None
+    assert not data['cleanupErrors']
     assert data['interrupted']==interrupted and not data['learnerWorksheetCompletionInferred']
     assert re.fullmatch(r'[0-9a-f]{32}',data['bootId'])
     assert len(data['units'])==(1 if interrupted else 3 if kind=='progress' else 2)
@@ -95,10 +99,15 @@ def check(data,kind,complete,interrupted=False):
             except ProcessLookupError:
                 continue
             raise AssertionError(('managed worker survived',pid))
-        for observed in unit['observations']:
+        for number,observed in enumerate(unit['observations']):
             invocation=observed['state']['InvocationID']
             assert re.fullmatch(r'[0-9a-f]{32}',invocation)
-            assert observed['timer']['LastTriggerUSec'] not in ('','n/a','0')
+            if number==0:
+                assert observed['timer']['LastTriggerUSec'] not in ('','n/a','0')
+            elif observed['timer']['LoadState']=='loaded':
+                assert observed['timer']['LastTriggerUSec']==unit['observations'][0]['timer']['LastTriggerUSec']
+            else:
+                assert kind=='correlation' and observed['timer']['LoadState']=='not-found'
             workers=[e for e in observed['events'] if e['invocation']==invocation]
             assert workers and workers[0]['event']=='start'
             for e in workers:

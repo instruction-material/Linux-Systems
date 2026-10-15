@@ -208,8 +208,11 @@ class Unit:
     def cleanup(self):
         if not self.registered:
             return
-        row = run(self.report, 'stop exact owned units', ['systemctl','--user','stop',self.timer,self.service])
-        assert row['status']==0, row
+        before = {unit:state(self.report,unit) for unit in [self.timer,self.service]}
+        loaded = [unit for unit,value in before.items() if value['LoadState']!='not-found']
+        if loaded:
+            row = run(self.report, 'stop exact owned units', ['systemctl','--user','stop',*loaded])
+            assert row['status']==0, row
         current = state(self.report, self.service)
         if current.get('ActiveState')=='failed':
             row = run(self.report, 'reset exact owned failed unit', ['systemctl','--user','reset-failed',self.service])
@@ -324,17 +327,30 @@ def exercise(parent, policy, kind, reverse, hold, budget):
         report['failure'] = type(error).__name__+': '+str(error)
         status = 2
     finally:
+        cleanup_errors = []
         for unit in reversed(units):
-            unit.cleanup()
-        ready.unlink(missing_ok=True)
-        shutil.rmtree(case)
+            try:
+                unit.cleanup()
+            except (OSError, RuntimeError, ValueError, AssertionError, subprocess.SubprocessError) as error:
+                LOGGER.exception('An owned unit cleanup failed; continuing the other owned cleanups')
+                cleanup_errors.append(str(error))
+        report['cleanupErrors'] = cleanup_errors
+        if cleanup_errors:
+            report['failure'] = 'owned cleanup failed: '+'; '.join(cleanup_errors)
+            status = 2
+        else:
+            ready.unlink(missing_ok=True)
+            shutil.rmtree(case)
         report['sourceUnchanged'] = source_hashes()==before
         report['ownedCaseRemoved'] = not case.exists()
         report['workspaceEmpty'] = not any(parent.iterdir())
     if STOP:
         report['interrupted'] = True
-        status = 130
-    assert report['sourceUnchanged'] and report['ownedCaseRemoved'] and report['workspaceEmpty']
+        if report['failure'] is None:
+            status = 130
+    assert report['sourceUnchanged']
+    if not report['cleanupErrors']:
+        assert report['ownedCaseRemoved'] and report['workspaceEmpty']
     print(json.dumps(report,sort_keys=True),flush=True)
     return status
 

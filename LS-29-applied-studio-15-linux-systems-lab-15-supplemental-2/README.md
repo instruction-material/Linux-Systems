@@ -72,7 +72,10 @@ manager. Each actual timer starts its service after a short monotonic delay;
 there is no persistent unit installation or repeating schedule here. The report
 retains LastTriggerUSec, service state, invocation, worker events and real journal
 records. Only the correlation transfer additionally restarts its primary service
-for a manual retest. No other activation is claimed to have been scheduled.
+for a manual retest. Its initial elapsed timer may already have unloaded after
+that restart; retain the earlier captured trigger as historical evidence. The
+new service invocation is the operator retest. No other activation is claimed
+to have been scheduled.
 
 Status 0 requires the policy to match every recorded case. An unchanged starter
 returns 1 after preserving its differing decisions. Status 2 reports a setup or
@@ -117,10 +120,13 @@ it. Change no global manager, account, privilege or journal configuration.
 
 ## Cleanup, evidence and paced use
 
-The equipment stops only the generated timers/services, resets only its own
-failed unit if needed, verifies those transient units unloaded and their observed
-workers exited, removes its private case and ready file, and preserves source
-files. It leaves the real journal intact. Inspect statesAfterCleanup,
+The equipment inspects which generated units are still loaded, stops only those
+remaining timers/services, resets only its own failed unit if needed, and verifies
+both recorded names are unloaded and all observed workers exited. Only after
+successful cleanup does it remove its private case and ready file. If a cleanup
+operation fails, it still attempts the other owned cleanups and retains the case,
+commands and error for recovery instead of claiming an empty workspace. Source
+files remain unchanged. It leaves the real journal intact. Inspect statesAfterCleanup,
 ownedWorkerPidsGone, ownedCaseRemoved, workspaceEmpty and sourceUnchanged. Preserve
 the report and worksheet elsewhere, then use rmdir on the exact empty parent.
 
