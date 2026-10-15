@@ -105,6 +105,10 @@ jobs:
         run: shellcheck LS-01-linux-systems-lab-14/{starter,solution}/task.sh LS-27-applied-studio-14-linux-systems-lab-14-supplemental-2/{starter,solution}/task.sh LS-28-applied-studio-14-linux-systems-lab-14-supplemental-3/{starter,solution}/task.sh
       - name: Verify actual release rollback, payload integrity and publisher locks
         run: python3 test/verify_deployment_studio.py --proof output/linux-deployment-studio.json
+      - name: Check required operations capstone shell source
+        run: shellcheck LS-04-linux-systems-lab-17/{starter,solution}/task.sh
+      - name: Verify actual capstone identity, manager, timer, proxy and restore
+        run: python3 test/verify_operations_capstone.py --proof output/linux-operations-capstone.json
       - name: Retain native source acceptance
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a

@@ -1,0 +1,17 @@
+[Unit]
+Description=Owned scheduled capstone snapshot @@UNIT@@
+
+[Service]
+Type=oneshot
+User=@@UID@@
+Group=@@GID@@
+WorkingDirectory=@@ROOT@@
+ExecStart=/usr/bin/python3 @@ROOT@@/operator/backup.py build @@ROOT@@/current @@ROOT@@/backups
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+ProtectSystem=strict
+ReadWritePaths=@@ROOT@@/backups
+ProtectHome=yes
+PrivateTmp=yes
+StandardOutput=journal
+StandardError=journal
