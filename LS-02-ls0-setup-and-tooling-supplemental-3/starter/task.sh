@@ -1,5 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
-# TODO: summarize the log file more carefully.
-grep -c "ERROR" sample.log
+[[ $(uname -s) == Linux && $EUID -gt 0 ]] || { printf 'Use an ordinary account in an owned Linux lab.\n' >&2; exit 2; }
+if (( $# < 1 )); then
+    printf 'usage: bash task.sh OWNED_BASH_SCRIPT [ARGUMENT...]\n' >&2
+    exit 2
+fi
+target=$1
+shift
+[[ -f $target && ! -L $target && -O $target ]] || { printf 'Use an owned ordinary nonsymlink script.\n' >&2; exit 2; }
+case $target in
+    /*) ;;
+    *) target=$PWD/$target ;;
+esac
+# TODO: launch the supplied Bash program with its required interpreter.
+BASH_ENV=/dev/null exec /bin/sh "$target" "$@"
