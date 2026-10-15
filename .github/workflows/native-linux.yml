@@ -97,6 +97,10 @@ jobs:
         run: shellcheck LS-17-unit-8-scheduling-and-automation-supplemental-2/{starter,solution}/task.sh LS-18-unit-8-scheduling-and-automation-supplemental-3/{starter,solution}/task.sh
       - name: Verify actual calendar forecasts and owned repeating timers
         run: python3 test/verify_scheduling_optional.py --proof output/linux-scheduling-optional.json
+      - name: Check web investigation shell source
+        run: shellcheck LS-23-unit-11-web-servers-supplemental-2/{starter,solution}/task.sh LS-24-unit-11-web-servers-supplemental-3/{starter,solution}/task.sh
+      - name: Verify actual host defaults and conditional HTTP representations
+        run: python3 test/verify_web_optional.py --proof output/linux-web-optional.json
       - name: Retain native source acceptance
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
