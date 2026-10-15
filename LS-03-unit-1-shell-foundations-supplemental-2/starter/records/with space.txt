@@ -1,0 +1,3 @@
+00:04 WARNING waiting
+00:05 ERROR unknown
+00:08 INFO ERROR4
