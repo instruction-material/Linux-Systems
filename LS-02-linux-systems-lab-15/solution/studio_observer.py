@@ -140,10 +140,13 @@ class Unit:
         self.configure(mode, value)
         self.registered = False
         self.observations = []
+        self.activation_evidence = []
         units.append(self)
 
     def configure(self, mode, value):
         self.job = {'run': uuid.uuid4().hex, 'mode': mode, 'value': value}
+        self.gate = self.root/('permit-'+self.job['run']+'.marker')
+        self.job['gate'] = str(self.gate)
         self.config.write_text(json.dumps(self.job, sort_keys=True)+'\n')
         self.config.chmod(0o600)
 
@@ -162,20 +165,35 @@ class Unit:
             raise RuntimeError('the owned user timer could not be created: '+row['stderr'])
         return self.finish_or_start()
 
-    def finish_or_start(self):
+    def finish_or_start(self, scheduled=True):
         started = wait_for(lambda: [e for e in events(self.events) if e['event']=='start' and e['run']==self.job['run']])
-        invocation = started[0]['invocation']
+        worker = started[0]
+        invocation = worker['invocation']
         assert re.fullmatch(r'[0-9a-f]{32}', invocation)
-        if self.job['mode'] == 'hang':
-            current = wait_for(lambda: self.running_state(invocation))
-            pid = int(current['MainPID'])
-            assert str(SOURCE/'studio_worker.py').encode() in Path('/proc', str(pid), 'cmdline').read_bytes()
-            info = Path('/proc', str(pid), 'status').read_text()
-            uids = next(line.split()[1:] for line in info.splitlines() if line.startswith('Uid:'))
-            assert all(int(uid)==os.geteuid() for uid in uids)
-            self.report['actualManagedProcesses'].append({'pid': pid, 'uid': os.geteuid(),
-                'unit': self.service, 'invocation': invocation, 'cmdlineBase64': base64.b64encode(Path('/proc', str(pid), 'cmdline').read_bytes()).decode()})
-        else:
+        current = wait_for(lambda: self.running_state(invocation))
+        pid = int(current['MainPID'])
+        assert pid == worker['pid'] and worker['uid'] == os.geteuid()
+        cmdline = Path('/proc',str(pid),'cmdline').read_bytes()
+        assert str(SOURCE/'studio_worker.py').encode() in cmdline
+        info = Path('/proc',str(pid),'status').read_text()
+        uids = next(line.split()[1:] for line in info.splitlines() if line.startswith('Uid:'))
+        assert all(int(uid)==os.geteuid() for uid in uids)
+        process = {'pid':pid,'uid':os.geteuid(),'unit':self.service,'invocation':invocation,
+                   'cmdlineBase64':base64.b64encode(cmdline).decode()}
+        self.report['actualManagedProcesses'].append(process)
+        timer = state(self.report,self.timer)
+        if scheduled:
+            assert timer['LoadState']=='loaded' and timer['LastTriggerUSec'] not in ('','n/a','0')
+        observed_journal = journal(self.report,[self.service],len(events(self.events)))
+        # Acknowledgment is issued only after the real timer, PID and journal are captured.
+        release_requested = time.monotonic_ns()
+        self.gate.write_text(self.job['run']+'\n')
+        self.gate.chmod(0o600)
+        self.activation_evidence.append({'kind':'timer' if scheduled else 'operator-retest',
+            'state':current,'timer':timer,'worker':worker,'journalRows':observed_journal,
+            'process':process,'job':self.job.copy(),'gate':file_record(self.gate),
+            'releaseRequestedMonotonicNs':release_requested,'releasedMonotonicNs':time.monotonic_ns()})
+        if self.job['mode'] != 'hang':
             current = wait_for(lambda: self.finished_state(invocation))
         return self.capture(current)
 
@@ -199,9 +217,9 @@ class Unit:
     def restart(self, mode, value):
         old = self.observations[-1]['state']['InvocationID']
         self.configure(mode, value)
-        row = run(self.report, 'actual operator retest restart', ['systemctl','--user','restart',self.service])
+        row = run(self.report, 'actual operator retest restart', ['systemctl','--user','--no-block','restart',self.service])
         assert row['status']==0, row
-        fresh = self.finish_or_start()
+        fresh = self.finish_or_start(False)
         assert fresh['state']['InvocationID']!=old
         return fresh
 
@@ -235,6 +253,7 @@ class Unit:
             raise RuntimeError('the owned managed worker is still present')
         self.report['units'].append({'case':self.case, 'service':self.service, 'timer':self.timer,
             'beforeOutput':self.before, 'observations':self.observations, 'events':observed,
+            'activationEvidence':self.activation_evidence,
             'statesAfterCleanup':states, 'ownedWorkerPidsGone':True})
 
 

@@ -99,15 +99,21 @@ def check(data,kind,complete,interrupted=False):
             except ProcessLookupError:
                 continue
             raise AssertionError(('managed worker survived',pid))
-        for number,observed in enumerate(unit['observations']):
+        activations=unit['activationEvidence']
+        assert len(activations)==len({e['invocation'] for e in unit['events']})
+        assert activations[0]['kind']=='timer'
+        assert activations[0]['timer']['LoadState']=='loaded'
+        assert activations[0]['timer']['LastTriggerUSec'] not in ('','n/a','0')
+        for activation in activations:
+            assert activation['state']['ActiveState']=='activating'
+            assert int(activation['state']['MainPID'])==activation['worker']['pid']==activation['process']['pid']
+            assert activation['state']['InvocationID']==activation['worker']['invocation']==activation['process']['invocation']
+            gate=base64.b64decode(activation['gate']['bytesBase64'],validate=True)
+            assert gate.decode().strip()==activation['job']['run'] and activation['gate']['mode']=='0o600'
+            assert activation['worker']['monotonicNs']<=activation['releaseRequestedMonotonicNs']<=activation['releasedMonotonicNs']
+        for observed in unit['observations']:
             invocation=observed['state']['InvocationID']
             assert re.fullmatch(r'[0-9a-f]{32}',invocation)
-            if number==0:
-                assert observed['timer']['LastTriggerUSec'] not in ('','n/a','0')
-            elif observed['timer']['LoadState']=='loaded':
-                assert observed['timer']['LastTriggerUSec']==unit['observations'][0]['timer']['LastTriggerUSec']
-            else:
-                assert kind=='correlation' and observed['timer']['LoadState']=='not-found'
             workers=[e for e in observed['events'] if e['invocation']==invocation]
             assert workers and workers[0]['event']=='start'
             for e in workers:
@@ -146,7 +152,7 @@ def check(data,kind,complete,interrupted=False):
         assert sum(c['case']=='actual operator retest restart' for c in data['commands'])==1
     else:
         assert len(data['decisions'])==4 and {d['expected'] for d in data['decisions']}=={'waiting','overdue','complete','failed'}
-        assert len(data['actualManagedProcesses'])==1
+        assert len(data['actualManagedProcesses'])==3
         for d in data['decisions']:
             if d['expected'] in ['waiting','overdue']:
                 assert int(d['state']['MainPID'])>0 and d['state']['ActiveState']=='activating'
@@ -231,6 +237,9 @@ def main():
            'actualWorkerEvents':sum(len(u['events']) for u in units),
            'actualPolicyDecisions':sum(len(r['decisions']) for r in reports),
            'actualManagedProcessObservations':sum(len(r['actualManagedProcesses']) for r in reports),
+           'actualObservationGates':sum(len(u['activationEvidence']) for u in units),
+           'actualScheduledGateObservations':sum(a['kind']=='timer' for u in units for a in u['activationEvidence']),
+           'actualOperatorRetests':sum(a['kind']=='operator-retest' for u in units for a in u['activationEvidence']),
            'error':error,'learnerWorksheetCompletionInferred':False}
     args.proof.write_text(json.dumps(proof,indent=2)+'\n')
     args.proof.with_suffix('.observations.json').write_text(json.dumps(ROWS,indent=2)+'\n')

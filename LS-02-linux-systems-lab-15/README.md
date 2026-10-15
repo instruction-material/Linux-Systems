@@ -66,11 +66,19 @@ python3 -m json.tool observation.json
 ~~~
 
 The equipment uses only fresh classes-observe-<32-hex> names in the own-user
-manager. Each actual timer starts its service after a short monotonic delay;
+manager. Each actual worker emits its start and pauses at a private run-specific
+file gate. The observer records the real triggering timer, live PID/UID,
+manager invocation and start journal before acknowledging that gate. This supplied
+synchronization makes even very short failed jobs inspectable; it is not a
+replacement timer, simulated record or learner policy. The progress budget
+still includes the elapsed time since the actual worker start. Each actual timer starts its service after a short monotonic delay;
 there is no persistent unit installation or repeating schedule here. The report
 retains LastTriggerUSec, service state, invocation, worker events and real journal
 records. Only the correlation transfer additionally restarts its primary service
-for a manual retest. Its initial elapsed timer may already have unloaded after
+for a manual retest. The restart request uses --no-block; request acceptance is
+separate from the observed new invocation and subsequent completion. The observer
+acknowledges the new run's separate file gate before waiting for its outcome.
+Its initial elapsed timer may already have unloaded after
 that restart; retain the earlier captured trigger as historical evidence. The
 new service invocation is the operator retest. No other activation is claimed
 to have been scheduled.
@@ -136,4 +144,5 @@ expectation and the limits of the captured observation explicit in the runbook.
 
 Primary references: [runtime invocation environment](https://github.com/systemd/systemd/blob/main/man/systemd.exec.xml),
 [oneshot and retained service state](https://github.com/systemd/systemd/blob/main/man/systemd.service.xml)
-and [elapsed timer state](https://github.com/systemd/systemd/blob/main/man/systemd.timer.xml).
+[elapsed timer state](https://github.com/systemd/systemd/blob/main/man/systemd.timer.xml)
+and [asynchronous request semantics](https://github.com/systemd/systemd/blob/main/man/systemctl.xml).

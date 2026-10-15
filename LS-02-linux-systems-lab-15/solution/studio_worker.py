@@ -25,6 +25,17 @@ def main():
         print(json.dumps(row, sort_keys=True), flush=True)
 
     emit('start', 'started')
+    # A real file gate keeps even a very short failed invocation inspectable.
+    gate = Path(job['gate'])
+    if gate.parent != config.parent or gate.is_symlink():
+        raise ValueError('the observation gate must belong to this private job')
+    until = time.monotonic()+12
+    while not gate.is_file():
+        if time.monotonic() >= until:
+            raise TimeoutError('the observer did not acknowledge the live invocation')
+        time.sleep(0.01)
+    if gate.read_text().strip() != job['run']:
+        raise ValueError('the observation gate belongs to a different run')
     if job['mode'] == 'hang':
         while True:
             time.sleep(0.2)
