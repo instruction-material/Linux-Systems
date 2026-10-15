@@ -142,7 +142,7 @@ def observe(lab, report):
     root = lab / "data"
     commands = [
         ["df", "--block-size=1", "--output=source,fstype,size,used,avail,pcent,target", "--", str(root)],
-        ["df", "--inodes", "--output=source,itotal,iused,iavail,ipcent,target", "--", str(root)],
+        ["df", "--output=source,itotal,iused,iavail,ipcent,target", "--", str(root)],
         ["du", "--block-size=1", "--summarize", "--", str(root)],
         ["du", "--apparent-size", "--block-size=1", "--summarize", "--", str(root)],
     ]
