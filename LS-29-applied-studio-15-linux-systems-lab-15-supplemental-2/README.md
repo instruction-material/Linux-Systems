@@ -1,14 +1,135 @@
-# Applied Studio 15: linux systems lab 15 supplemental 2
+# Journal Correlation Across Real Invocations
 
-Course: Linux Systems
-Module: Applied Studio 15: linux systems lab 15 supplemental 2
+This optional transfer follows the studio's scheduled-output project. It asks
+which actual completion records belong to a chosen runtime cycle. A historical
+error, current successful rerun and unrelated job all produce valid journal
+entries. Counting words or filtering only by severity cannot identify the run.
 
-Use the starter folder first. The starter is intentionally incomplete, and the solution shows one clean way to finish the same build after the student has worked through it.
+## Scope and the selection function
 
-Suggested flow:
-- Read the module brief and identify the core requirement.
-- Complete the TODO markers in the starter implementation.
-- Test at least one custom case beyond the default example.
-- Compare against the solution only after the student has a working draft.
+Complete select_completed in task.py. Its input is the actual combined own-user
+journal and an InvocationID sampled from the real manager. Parse MESSAGE with
+json.loads, ignore non-JSON or unrelated manager messages, and return only the
+original rows whose decoded event is end and whose decoded invocation equals
+the requested identifier. Preserve their order and both successful and error
+statuses. This task selects evidence; it does not turn an error into success.
 
-Quick run hint: `bash task.sh`
+The first actual timer invokes a worker that records an error but exits zero.
+The equipment records that invocation, changes only its private job input and
+performs an explicitly labeled operator restart of the same service. That is
+a manual retest, not a second scheduled trigger. Its fresh invocation records
+a successful output. An independently named actual timer/service also records
+an unrelated error. The real journal contains all three cycles.
+
+Select the current, historical and unrelated anchors in turn. Each correct
+selection contains one completion row, although its status differs by anchor.
+The starter returns every completion row for every anchor. --reverse changes
+anchor order and the new desired payload; it does not alter the old journal
+or fabricate records. Retain the actual old/new manager InvocationIDs and the
+explicit restart command so the two cycles cannot be collapsed into one run.
+
+The worker includes the manager-supplied invocation in structured MESSAGE data.
+The equipment separately retains journal _PID, _UID, boot and user-unit fields
+and actual manager state. A program-written field is a correlation claim, not
+an authorization token; compare it with the surrounding observed identities.
+
+## Environment and exact role files
+
+Use Bash and Python 3.8+ in an owned disposable Linux environment, as an ordinary
+non-root account with an available own-user systemd manager and readable own-user
+journal. systemctl, systemd-run and journalctl must already be installed. The
+earlier readiness, service, logging and scheduling units establish those
+prerequisites. Do not treat a host shell or a missing manager as a successful
+substitute. The equipment reports the actual prerequisite failure with status 2.
+
+Keep task.sh, task.py, studio_observer.py, studio_worker.py and
+observability-notes.md together. The site IDE edits, saves and exports this
+selected role; operating commands run in the external Linux terminal. Only the
+named function in task.py is the learner repair. The observer and worker are
+supplied equipment, and the worksheet remains independent in both roles.
+
+The manager supplies one INVOCATION_ID per runtime cycle. RemainAfterExit=yes
+keeps a successful oneshot active after its process exits. RemainAfterElapse=yes
+keeps the elapsed timer queryable. These settings retain observation state;
+they do not establish that the intended output was produced. The linked primary
+references describe those settings separately from this project's policy.
+
+## Predict, run and inspect
+
+From the exported role folder, create one explicit empty private parent:
+
+~~~bash
+lab_root=$(mktemp -d)
+bash task.sh "$lab_root" > observation.json 2> observation.err
+observation_status=$?
+printf 'status=%s\n' "$observation_status"
+cat observation.err
+python3 -m json.tool observation.json
+~~~
+
+The equipment uses only fresh classes-observe-<32-hex> names in the own-user
+manager. Each actual timer starts its service after a short monotonic delay;
+there is no persistent unit installation or repeating schedule here. The report
+retains LastTriggerUSec, service state, invocation, worker events and real journal
+records. Only the correlation transfer additionally restarts its primary service
+for a manual retest. No other activation is claimed to have been scheduled.
+
+Status 0 requires the policy to match every recorded case. An unchanged starter
+returns 1 after preserving its differing decisions. Status 2 reports a setup or
+equipment failure; status 130 reports an interrupted observation. A reference
+run establishes equipment behavior, not a completed independent worksheet.
+
+Keep the exact CLI argv, child PIDs, output, stderr, statuses and times with the
+manager and application observations. The worker records its PID, ordinary UID,
+manager invocation and both wall and monotonic timestamps. Hanging workers are
+also observed through their real /proc command line and UID. Journal _PID/_UID,
+boot and user-unit identities must agree with the selected worker observations.
+
+## Changed case, interruption and recovery
+
+~~~bash
+bash task.sh "$lab_root" --reverse > changed.json 2> changed.err
+changed_status=$?
+printf 'status=%s\n' "$changed_status"
+~~~
+
+The now-empty parent is reused for a newly generated case; identifiers and
+timestamps change. Compare the intended relationships rather than copying
+earlier values. For an independent live inspection, run a held observation:
+
+~~~bash
+bash task.sh "$lab_root" --hold-seconds 15 > held.json 2> held.err
+~~~
+
+This creates a separate actual timer-triggered hanging worker before the ordinary
+cases. ready.json under lab_root identifies the observer, exact owned service
+and live worker PID. In another terminal inspect that named user unit, its timer
+and journal. Ctrl-C in the observer terminal requests status 130 and owned cleanup.
+Repeat normally after the interruption for a real recovery run. A killed terminal
+cannot guarantee cleanup; retain the recorded names and stop only those exact
+owned timer/service units before removing their private files. Never use broad
+unit-stop or journal-vacuum commands for this exercise.
+
+Missing, nonempty or symlink parents, root/non-Linux operation, unavailable
+tools/manager and holds outside 0–15 are refusals. Existing input files must stay
+unchanged. Try a parent containing spaces and keep an unrelated sentinel outside
+it. Change no global manager, account, privilege or journal configuration.
+
+## Cleanup, evidence and paced use
+
+The equipment stops only the generated timers/services, resets only its own
+failed unit if needed, verifies those transient units unloaded and their observed
+workers exited, removes its private case and ready file, and preserves source
+files. It leaves the real journal intact. Inspect statesAfterCleanup,
+ownedWorkerPidsGone, ownedCaseRemoved, workspaceEmpty and sourceUnchanged. Preserve
+the report and worksheet elsewhere, then use rmdir on the exact empty parent.
+
+Complete observability-notes.md with environment, prediction, actual manager and
+journal identities, output or progress evidence, the named repair, changed case,
+refusal, interruption, recovery and verified cleanup. A paced walkthrough follows
+the same predict, operate, inspect, correct and repeat sequence. Keep application
+expectation and the limits of the captured observation explicit in the runbook.
+
+Primary references: [runtime invocation environment](https://github.com/systemd/systemd/blob/main/man/systemd.exec.xml),
+[oneshot and retained service state](https://github.com/systemd/systemd/blob/main/man/systemd.service.xml)
+and [elapsed timer state](https://github.com/systemd/systemd/blob/main/man/systemd.timer.xml).
