@@ -75,6 +75,10 @@ jobs:
         run: shellcheck LS-12-unit-12-storage-backups-and-reliability/{starter,solution}/task.sh LS-25-unit-12-storage-backups-and-reliability-supplemental-2/{starter,solution}/task.sh LS-26-unit-12-storage-backups-and-reliability-supplemental-3/{starter,solution}/task.sh
       - name: Verify actual capacity, separate restores, corruption and retention
         run: python3 test/verify_storage_labs.py --proof output/linux-storage-labs.json
+      - name: Check optional shell pipeline source
+        run: shellcheck LS-03-unit-1-shell-foundations-supplemental-2/{starter,solution}/task.sh LS-04-unit-1-shell-foundations-supplemental-3/{starter,solution}/task.sh
+      - name: Verify literal filename streams and original pipeline failures
+        run: python3 test/verify_shell_optional.py --proof output/linux-shell-optional.json
       - name: Retain native source acceptance
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a

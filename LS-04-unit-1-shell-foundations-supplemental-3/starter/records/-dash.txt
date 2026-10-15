@@ -1,0 +1,2 @@
+00:06 INFO ERROR4
+00:07 ERROR[42] literal marker
