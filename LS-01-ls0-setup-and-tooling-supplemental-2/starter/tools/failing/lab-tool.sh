@@ -1,5 +1,12 @@
 #!/bin/sh
 set -eu
-[ "$#" -eq 1 ] && [ "$1" = --version ] || { printf 'Use --version.\n' >&2; exit 64; }
+if [ "$#" -ne 1 ]; then
+    printf 'Use --version.\n' >&2
+    exit 64
+fi
+if [ "$1" != --version ]; then
+    printf 'Use --version.\n' >&2
+    exit 64
+fi
 printf '%s\n' 'controlled version failure' >&2
 exit 23
