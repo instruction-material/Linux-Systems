@@ -83,6 +83,10 @@ jobs:
         run: shellcheck LS-05-unit-2-filesystem-hierarchy-and-directory-purpose-supplemental-2/{starter,solution}/task.sh LS-06-unit-2-filesystem-hierarchy-and-directory-purpose-supplemental-3/{starter,solution}/task.sh
       - name: Verify actual logical paths and live filesystem reads
         run: python3 test/verify_filesystem_optional.py --proof output/linux-filesystem-optional.json
+      - name: Check optional permission experiment shell source
+        run: shellcheck LS-07-unit-3-users-groups-and-permissions-supplemental-2/{starter,solution}/task.sh LS-08-unit-3-users-groups-and-permissions-supplemental-3/{starter,solution}/task.sh
+      - name: Verify actual unlink permissions and creation masks
+        run: python3 test/verify_permissions_optional.py --proof output/linux-permissions-optional.json
       - name: Retain native source acceptance
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
