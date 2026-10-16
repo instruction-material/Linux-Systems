@@ -45,6 +45,8 @@ jobs:
           printf 'XDG_RUNTIME_DIR=%s\nDBUS_SESSION_BUS_ADDRESS=unix:path=%s/bus\n' "$native_lab_runtime" "$native_lab_runtime" >>"$GITHUB_ENV"
       - name: Verify actual owned user service, journal, restart and recovery
         run: python3 test/verify_systemd_service.py --proof output/linux-systemd-service.json
+      - name: Verify delayed exec identity and strict managed-process refusals
+        run: python3 test/verify_systemd_identity.py --proof output/linux-systemd-identity.json
       - name: Verify distinct service transfer and environment drop-in labs
         run: python3 test/verify_systemd_supplemental.py --proof output/linux-systemd-supplemental.json
       - name: Verify scoped journal incidents, application timelines and actual retention
