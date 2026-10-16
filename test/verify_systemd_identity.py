@@ -47,19 +47,20 @@ unit_root = home / ".config/systemd/user"
 unit_root.mkdir(parents=True, exist_ok=True)
 save()
 try:
-    for label in ("delayed-exec", "wrong-script", "wrong-managed-pid"):
+    for label in ("delayed-exec", "misleading-argv", "wrong-script", "wrong-managed-pid"):
         name = "course-identity-" + uuid.uuid4().hex[:12]
         work = home / ".local/share" / name
         work.mkdir(parents=True)
         unit, unit_file = name + ".service", unit_root / (name + ".service")
         app, launcher, gate = work / "heartbeat_app.py", work / "preexec.py", work / "permit"
         app.write_text("import time\nwhile True:\n time.sleep(0.1)\n")
-        launcher.write_text("import os,sys,time\nfrom pathlib import Path\n"
-                            "target=Path(sys.argv[1]);gate=target.with_name('permit')\n"
+        launcher.write_text("import os,time\nfrom pathlib import Path\n"
+                            f"target=Path({str(app)!r});gate=target.with_name('permit')\n"
                             "while not gate.exists():time.sleep(0.01)\n"
                             "os.execv('/usr/bin/python3',['/usr/bin/python3','-u',str(target)])\n")
+        app_argument = "" if label == "delayed-exec" else " " + str(app)
         unit_file.write_text("[Unit]\nDescription=Owned process identity regression\n[Service]\nType=simple\n"
-                             f"ExecStart=/usr/bin/python3 -u {launcher} {app}\nRestart=no\n")
+                             f"ExecStart=/usr/bin/python3 -u {launcher}{app_argument}\nRestart=no\n")
         row = {"case": label, "unit": unit, "work": str(work), "accepted": False}
         proof["cases"].append(row)
         save()
@@ -77,9 +78,10 @@ try:
                     break
                 assert time.monotonic() < deadline
                 time.sleep(0.01)
-            assert os.fsencode(app) in before and os.fsencode(app) in b"\0".join(before)
-            row.update(pid=pid, initialArgv=[os.fsdecode(value) for value in before], managerBefore=state)
-            if label == "delayed-exec":
+            assert (os.fsencode(app) in before) is (label != "delayed-exec")
+            row.update(pid=pid, initialArgv=[os.fsdecode(value) for value in before], managerBefore=state,
+                       oldImmediateSubstringAssertionWouldPass=os.fsencode(app) in b"\0".join(before))
+            if label in ("delayed-exec", "misleading-argv"):
                 def release_after_observation(gate=gate, launcher=launcher, start=start):
                     deadline = time.monotonic() + 4
                     while time.monotonic() < deadline:
@@ -121,7 +123,7 @@ try:
             shutil.rmtree(work)
             row["cleanup"] = {"unitRemoved": not unit_file.exists(), "directoryRemoved": not work.exists(), "processStopped": True}
             save()
-    assert len(proof["cases"]) == 3 and all(row["accepted"] for row in proof["cases"])
+    assert len(proof["cases"]) == 4 and all(row["accepted"] for row in proof["cases"])
     proof["accepted"] = True
 finally:
     save()
