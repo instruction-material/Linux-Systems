@@ -91,7 +91,19 @@ try:
                         time.sleep(0.01)
                 releaser = threading.Thread(target=release_after_observation)
                 releaser.start()
-                actual = owned_process(unit, work, state, app, timeout=5)
+                callback_reads = []
+
+                def callback_properties(unit, cwd, calls=callback_reads):
+                    calls.append(unit)
+                    return properties(unit, cwd)
+
+                if label == "misleading-argv":
+                    actual = owned_process(unit, work, state, app, timeout=5,
+                                           read_properties=callback_properties, evidence=records)
+                    assert len(callback_reads) >= 2
+                    row["explicitCallbacksVerified"] = True
+                else:
+                    actual = owned_process(unit, work, state, app, timeout=5)
                 assert actual == pid and gate.exists()
                 after = Path("/proc", str(pid), "cmdline").read_bytes().removesuffix(b"\0").split(b"\0")
                 assert after == [b"/usr/bin/python3", b"-u", os.fsencode(app)]

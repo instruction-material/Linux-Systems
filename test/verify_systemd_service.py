@@ -85,14 +85,17 @@ def require_rows(unit, cwd, pid, message):
         time.sleep(0.1)
 
 
-def owned_process(unit, cwd, state, app, timeout=8):
+def owned_process(unit, cwd, state, app, timeout=8, *, read_properties=None, evidence=None):
+    properties_reader = read_properties or properties
+    if evidence is None:
+        evidence = records
     pid = int(state["MainPID"])
     assert state["ActiveState"] == "active" and state["SubState"] == "running" and pid > 0
     expected = [b"/usr/bin/python3", b"-u", os.fsencode(app)]
     deadline = time.monotonic() + timeout
     attempts = []
     while True:
-        current = properties(unit, cwd)
+        current = properties_reader(unit, cwd)
         assert current["ActiveState"] == "active" and current["SubState"] == "running" and int(current["MainPID"]) == pid, current
         process = Path("/proc", str(pid))
         try:
@@ -110,20 +113,20 @@ def owned_process(unit, cwd, state, app, timeout=8):
             attempt = {"kind": "process-identity-ready" if ready else "process-identity-pending", "unit": unit, "pid": pid, "state": current,
                        "observedArgv": [os.fsdecode(value) for value in argv], "observedUids": uids,
                        "executable": str(executable), "startTicks": after_start, "identityReady": ready}
-            records.append(attempt)
+            evidence.append(attempt)
             attempts.append(attempt)
             assert all(value == os.geteuid() for value in uids), attempt
             if ready:
-                confirmed = properties(unit, cwd)
+                confirmed = properties_reader(unit, cwd)
                 assert confirmed["ActiveState"] == "active" and confirmed["SubState"] == "running" and int(confirmed["MainPID"]) == pid, confirmed
-                records.append({"kind": "managed-process", "unit": unit, "pid": pid, "uid": os.geteuid(),
+                evidence.append({"kind": "managed-process", "unit": unit, "pid": pid, "uid": os.geteuid(),
                                 "state": confirmed, "commandPath": str(app), "observedArgv": attempt["observedArgv"],
                                 "startTicks": after_start, "identityAttempts": len(attempts)})
                 return pid
             assert time.monotonic() < deadline, {"unit": unit, "pid": pid, "identityAttempts": attempts}
             time.sleep(0.05)
             continue
-        records.append(attempt)
+        evidence.append(attempt)
         attempts.append(attempt)
         assert time.monotonic() < deadline, {"unit": unit, "pid": pid, "identityAttempts": attempts}
         time.sleep(0.05)

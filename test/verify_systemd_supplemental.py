@@ -18,6 +18,8 @@ import uuid
 from pathlib import Path
 from urllib.parse import urlencode
 
+from verify_systemd_service import owned_process as observe_owned_process
+
 TRANSFER = "LS-13-unit-6-services-and-systemd-supplemental-2"
 EXTENSION = "LS-14-unit-6-services-and-systemd-supplemental-3"
 parser = argparse.ArgumentParser()
@@ -107,13 +109,7 @@ def journal_match(unit, work, predicate):
 
 def owned_process(unit, work, app, previous=None):
     state = wait_for(unit, work, lambda s: s["ActiveState"] == "active" and s["SubState"] == "running" and int(s["MainPID"]) > 0 and (previous is None or int(s["MainPID"]) != previous))
-    pid = int(state["MainPID"])
-    assert str(app).encode() in Path("/proc", str(pid), "cmdline").read_bytes()
-    uids = next(line.split()[1:] for line in Path("/proc", str(pid), "status").read_text().splitlines() if line.startswith("Uid:"))
-    assert all(int(value) == os.geteuid() for value in uids)
-    records.append({"kind": "managed-process", "unit": unit, "pid": pid, "uid": os.geteuid(), "commandPath": str(app), "state": state})
-    return pid
-
+    return observe_owned_process(unit, work, state, app, read_properties=properties, evidence=records)
 
 def fail_state(unit, work, code, word):
     state = wait_for(unit, work, lambda s: s["ActiveState"] == "failed" and s["MainPID"] == "0" and s["ExecMainStatus"] == str(code))
