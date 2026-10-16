@@ -3,6 +3,7 @@ import argparse
 import ast
 import base64
 import hashlib
+import importlib.util
 import json
 import logging
 import os
@@ -10,11 +11,14 @@ import platform
 import re
 import shutil
 import signal
+import stat
 import subprocess
+import sys
 import tempfile
 import time
 import traceback
 from pathlib import Path
+from unittest import mock
 
 ROOT=Path(__file__).resolve().parents[1]
 PACKS=['LS-02-linux-systems-lab-15', 'LS-29-applied-studio-15-linux-systems-lab-15-supplemental-2', 'LS-30-applied-studio-15-linux-systems-lab-15-supplemental-3']
@@ -206,17 +210,78 @@ def exercise(pack,profile,work):
                      'learnerWorksheetCompletionInferred':False})
 
 
+def check_gate_publication(work):
+    """Check complete/private publication, collision refusal and failure cleanup."""
+    records=[]
+    for index,(pack,role) in enumerate((pack,role) for pack in PACKS for role in ['starter','solution']):
+        source=ROOT/pack/role/'studio_observer.py'
+        spec=importlib.util.spec_from_file_location('observer_gate_'+str(index),source)
+        module=importlib.util.module_from_spec(spec)
+        sys.dont_write_bytecode=True
+        spec.loader.exec_module(module)
+        directory=work/('publication-'+str(index));directory.mkdir(mode=0o700)
+        token='new-complete-private-permit-'+str(index)
+        gate=directory/'permit.marker'
+        replace=os.replace
+        publications=[]
+        def observed_replace(staging,destination,expected_gate=gate,expected_token=token,prior_replace=replace,observations=publications):
+            assert destination==expected_gate and not expected_gate.exists()
+            assert staging.read_bytes()==(expected_token+'\n').encode()
+            assert stat.S_IMODE(staging.stat().st_mode)==0o600
+            observations.append({'destinationWasAbsent':True,'completeBeforePublication':True,'mode':'0o600'})
+            return prior_replace(staging,destination)
+        with mock.patch.object(module.os,'replace',side_effect=observed_replace):
+            module.publish_gate(gate,token)
+        assert len(publications)==1 and gate.read_bytes()==(token+'\n').encode()
+        assert stat.S_IMODE(gate.stat().st_mode)==0o600 and not gate.with_name(gate.name+'.pending').exists()
+        records.append({'pack':pack,'role':role,'case':'complete-private-publication','evidence':publications[0]})
+        gate.unlink()
+        staging=gate.with_name(gate.name+'.pending');staging.write_bytes(b'existing sentinel\n')
+        try:
+            module.publish_gate(gate,token)
+        except FileExistsError:
+            pass
+        else:
+            raise AssertionError('preexisting staging file was overwritten')
+        assert staging.read_bytes()==b'existing sentinel\n' and not gate.exists()
+        records.append({'pack':pack,'role':role,'case':'existing-staging-refused','sentinelUnchanged':True})
+        staging.unlink()
+        with mock.patch.object(module.os,'replace',side_effect=OSError('controlled publication refusal')):
+            try:
+                module.publish_gate(gate,token)
+            except OSError as error:
+                assert str(error)=='controlled publication refusal'
+            else:
+                raise AssertionError('publication failure was not reported')
+        assert not gate.exists() and not staging.exists()
+        records.append({'pack':pack,'role':role,'case':'publication-failure-cleanup','privateTemporaryRemoved':True})
+    assert len(records)==18
+    return records
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--proof',type=Path,required=True)
+    parser.add_argument('--gate-only',action='store_true',help='Check private atomic publication only; not native manager acceptance')
     args=parser.parse_args()
     args.proof.parent.mkdir(parents=True,exist_ok=True)
     before=hashes()
+    if args.gate_only:
+        with tempfile.TemporaryDirectory(prefix='linux-observation-gate-') as directory:
+            gate_records=check_gate_publication(Path(directory))
+        assert not Path(directory).exists() and hashes()==before
+        result={'gateOnlyPassed':True,'nativePassed':False,'copies':6,'cases':18,
+                'sourceUnchanged':True,'atomicGatePublication':gate_records}
+        args.proof.write_text(json.dumps(result,indent=2)+'\n')
+        print(json.dumps({k:v for k,v in result.items() if k!='atomicGatePublication'}))
+        return
+    gate_records=[]
     error=None
     try:
         assert platform.system()=='Linux' and os.geteuid()>0
         with tempfile.TemporaryDirectory(prefix='linux-observability-native-') as directory:
             work=Path(directory)
+            gate_records=check_gate_publication(work)
             (work/'outside-sentinel').write_bytes(b'outside unchanged\n')
             for pack in PACKS:
                 for profile in ['starter','solution','completed']:
@@ -240,6 +305,7 @@ def main():
            'actualObservationGates':sum(len(u['activationEvidence']) for u in units),
            'actualScheduledGateObservations':sum(a['kind']=='timer' for u in units for a in u['activationEvidence']),
            'actualOperatorRetests':sum(a['kind']=='operator-retest' for u in units for a in u['activationEvidence']),
+           'atomicGatePublication':gate_records,'atomicGateCopies':6,'atomicGateCases':len(gate_records),
            'error':error,'learnerWorksheetCompletionInferred':False}
     args.proof.write_text(json.dumps(proof,indent=2)+'\n')
     args.proof.with_suffix('.observations.json').write_text(json.dumps(ROWS,indent=2)+'\n')
