@@ -34,6 +34,22 @@ def sha(data):
     return hashlib.sha256(data).hexdigest()
 
 
+def publish_gate(path, run):
+    """Expose only a complete private permit; preserve any preexisting staging file."""
+    temporary = path.with_name(path.name + '.pending')
+    descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    try:
+        with os.fdopen(descriptor, 'w') as stream:
+            stream.write(run + '\n')
+            stream.flush()
+            os.fchmod(stream.fileno(), 0o600)
+            os.fsync(stream.fileno())
+        os.replace(temporary, path)
+    finally:
+        with contextlib.suppress(FileNotFoundError):
+            temporary.unlink()
+
+
 def source_hashes():
     return {p.name: sha(p.read_bytes()) for p in SOURCE.iterdir() if p.is_file()}
 
@@ -187,8 +203,7 @@ class Unit:
         observed_journal = journal(self.report,[self.service],len(events(self.events)))
         # Acknowledgment is issued only after the real timer, PID and journal are captured.
         release_requested = time.monotonic_ns()
-        self.gate.write_text(self.job['run']+'\n')
-        self.gate.chmod(0o600)
+        publish_gate(self.gate, self.job['run'])
         self.activation_evidence.append({'kind':'timer' if scheduled else 'operator-retest',
             'state':current,'timer':timer,'worker':worker,'journalRows':observed_journal,
             'process':process,'job':self.job.copy(),'gate':file_record(self.gate),
