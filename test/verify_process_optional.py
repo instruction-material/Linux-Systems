@@ -393,8 +393,15 @@ try:
                 terminal.command("kill -STOP %1")
                 stopped = [wait_for(lambda pid=before["pid"]: (item if (item := kernel(pid)) and item["state"] == "T" else None), "stopped pipeline member") for before in (first, second)]
                 assert all(item["pgid"] == first["pgid"] for item in stopped)
-                jobs = terminal.command("jobs -l")
-                assert str(first["pid"]) in jobs and str(second["pid"]) in jobs and "Stopped" in jobs
+                # Kernel stop delivery and Bash job-table updates are asynchronous.
+                # Retain both kernel checks above; wait for Bash to report the same state.
+                def stopped_listing(terminal=terminal, first=first, second=second):
+                    listing = terminal.command("jobs -l")
+                    return listing if (str(first["pid"]) in listing
+                                       and str(second["pid"]) in listing
+                                       and "Stopped" in listing) else None
+
+                jobs = wait_for(stopped_listing, "Bash records both stopped pipeline members")
                 terminal.command("bg %1")
                 terminal.command("kill -USR1 %1")
                 for path, before in ((producer, first), (consumer, second)):
