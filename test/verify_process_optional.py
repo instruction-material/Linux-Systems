@@ -395,7 +395,7 @@ try:
                 assert all(item["pgid"] == first["pgid"] for item in stopped)
                 # Kernel stop delivery and Bash job-table updates are asynchronous.
                 # Retain both kernel checks above; wait for Bash to report the same state.
-                def stopped_listing():
+                def stopped_listing(terminal=terminal, first=first, second=second):
                     listing = terminal.command("jobs -l")
                     return listing if (str(first["pid"]) in listing
                                        and str(second["pid"]) in listing
