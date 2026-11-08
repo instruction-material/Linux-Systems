@@ -401,6 +401,8 @@ try:
                                        and str(second["pid"]) in listing
                                        and "Stopped" in listing) else None
 
+                stopped_wait = terminal.command("wait %1\nprintf 'STOP_WAIT_STATUS=%s\\n' \"$?\"")
+                assert "STOP_WAIT_STATUS=" + str(128 + signal.SIGSTOP) in stopped_wait
                 jobs = wait_for(stopped_listing, "Bash records both stopped pipeline members")
                 terminal.command("bg %1")
                 terminal.command("kill -USR1 %1")
@@ -423,7 +425,7 @@ try:
                 observations.append({"kind": "pipeline-job-control", "role": role,
                                      "before": [first, second], "stopped": stopped,
                                      "lastPid": second["pid"], "groupLeader": first["pid"],
-                                     "jobs": jobs, "foregroundStatus": 130,
+                                     "jobs": jobs, "stoppedWaitStatus": 128 + signal.SIGSTOP, "foregroundStatus": 130,
                                      "producerEvents": rows(producer), "consumerEvents": rows(consumer),
                                      "received": rows(received), "actualControllingTerminal": True})
                 for early, checked in ((False, False), (False, True), (True, False), (True, True)):
